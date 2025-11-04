@@ -4,9 +4,9 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
  
 Route::group([
-    // 'middleware' => 'api',
+    'middleware' => 'api',
     'prefix' => 'auth',
-    'middleware' => ['auth:api','permission:publish articles']
+    // 'middleware' => ['auth:api','permission:publish articles']
 ], function ($router) {
     Route::post('/register', [AuthController::class, 'register'])->name('register');
     Route::post('/login', [AuthController::class, 'login'])->name('login');
