@@ -12,46 +12,68 @@ class PermissionsDemoSeeder extends Seeder
     /**
      * Create the initial roles and permissions.
      */
-    public function run(): void
+    public function run()
     {
         // Reset cached roles and permissions
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
-        // create permissions
-        Permission::create(['guard_name' => 'api','name' => 'edit articles']);
-        Permission::create(['guard_name' => 'api','name' => 'delete articles']);
-        Permission::create(['guard_name' => 'api','name' => 'publish articles']);
-        Permission::create(['guard_name' => 'api','name' => 'unpublish articles']);
+        // --------------------------
+        // Dashboard
+        // --------------------------
+        Permission::create(['guard_name' => 'api', 'name' => 'show_dashboard_reports']);
 
-        // create roles and assign existing permissions
-        $role1 = Role::create(['guard_name' => 'api','name' => 'writer']);
-        $role1->givePermissionTo('edit articles');
-        $role1->givePermissionTo('delete articles');
+        // --------------------------
+        // Roles & Permissions
+        // --------------------------
+        Permission::create(['guard_name' => 'api', 'name' => 'create_role']);
+        Permission::create(['guard_name' => 'api', 'name' => 'list_role']);
+        Permission::create(['guard_name' => 'api', 'name' => 'edit_role']);
+        Permission::create(['guard_name' => 'api', 'name' => 'delete_role']);
 
-        $role2 = Role::create(['guard_name' => 'api','name' => 'admin']);
-        $role2->givePermissionTo('publish articles');
-        $role2->givePermissionTo('unpublish articles');
+        // --------------------------
+        // Staff
+        // --------------------------
+        Permission::create(['guard_name' => 'api', 'name' => 'create_staff']);
+        Permission::create(['guard_name' => 'api', 'name' => 'list_staff']);
+        Permission::create(['guard_name' => 'api', 'name' => 'edit_staff']);
+        Permission::create(['guard_name' => 'api', 'name' => 'delete_staff']);
 
-        $role3 = Role::create(['guard_name' => 'api','name' => 'Super-Admin']);
-        // gets all permissions via Gate::before rule; see AuthServiceProvider
+        // --------------------------
+        // Cabins
+        // --------------------------
+        Permission::create(['guard_name' => 'api', 'name' => 'create_cabin']);
+        Permission::create(['guard_name' => 'api', 'name' => 'list_cabin']);
+        Permission::create(['guard_name' => 'api', 'name' => 'edit_cabin']);
+        Permission::create(['guard_name' => 'api', 'name' => 'delete_cabin']);
+        Permission::create(['guard_name' => 'api', 'name' => 'show_cabin_details']);
 
-        // create demo users
-        $user = \App\Models\User::factory()->create([
-            'name' => 'Example User',
-            'email' => 'tester@example.com',
-        ]);
-        $user->assignRole($role1);
+        // --------------------------
+        // Reservations
+        // --------------------------
+        Permission::create(['guard_name' => 'api', 'name' => 'create_reservation']);
+        Permission::create(['guard_name' => 'api', 'name' => 'list_reservation']);
+        Permission::create(['guard_name' => 'api', 'name' => 'edit_reservation']);
+        Permission::create(['guard_name' => 'api', 'name' => 'cancel_reservation']);
+        Permission::create(['guard_name' => 'api', 'name' => 'show_reservation_details']);
 
-        $user = \App\Models\User::factory()->create([
-            'name' => 'Example Admin User',
-            'email' => 'admin@example.com',
-        ]);
-        $user->assignRole($role2);
+        // --------------------------
+        // Guests
+        // --------------------------
+        Permission::create(['guard_name' => 'api', 'name' => 'create_guest']);
+        Permission::create(['guard_name' => 'api', 'name' => 'list_guest']);
+        Permission::create(['guard_name' => 'api', 'name' => 'edit_guest']);
+        Permission::create(['guard_name' => 'api', 'name' => 'delete_guest']);
+        Permission::create(['guard_name' => 'api', 'name' => 'show_guest_profile']);
 
-        $user = \App\Models\User::factory()->create([
-            'name' => 'Example Super-Admin User',
-            'email' => 'superadmin@example.com',
-        ]);
-        $user->assignRole($role3);
+        // --------------------------
+        // Payments
+        // --------------------------
+        Permission::create(['guard_name' => 'api', 'name' => 'list_payment']);
+        Permission::create(['guard_name' => 'api', 'name' => 'refund_payment']);
+        Permission::create(['guard_name' => 'api', 'name' => 'show_payment_details']);
+
+        // Example role: Super Admin
+        $role = Role::create(['guard_name' => 'api', 'name' => 'Super Admin']);
+        $role->givePermissionTo(Permission::all());
     }
 }
