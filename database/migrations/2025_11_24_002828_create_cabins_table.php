@@ -19,7 +19,7 @@ public function up()
         $table->integer('capacity')->default(1);
         $table->integer('beds')->default(1);
         $table->integer('bathrooms')->default(1);
-        $table->json('services')->nullable(); // wifi, tv, asador, etc.
+        $table->json('services')->nullable(); 
         $table->enum('status', ['available', 'maintenance'])->default('available');
         $table->timestamps();
     });
