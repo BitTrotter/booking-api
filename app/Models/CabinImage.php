@@ -8,8 +8,8 @@ class CabinImage extends Model
 {
     protected $fillable = [
         'cabin_id',
-        'image_url',
-        'is_cover'
+        'url',
+        'is_main'
     ];
 
     public function cabin()

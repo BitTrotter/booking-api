@@ -45,6 +45,7 @@ class CabinController extends Controller
     // PUT /cabins/{id}
     public function update(Request $request, $id)
     {
+    
         $cabin = Cabin::findOrFail($id);
 
         $validated = $request->validate([
