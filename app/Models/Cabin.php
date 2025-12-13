@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Cabin extends Model
 {
-      protected $fillable = [
+    protected $fillable = [
         'name',
         'description',
         'price_per_night',
@@ -14,10 +14,25 @@ class Cabin extends Model
         'beds',
         'bathrooms',
         'services',
-        'status',
+        'status'
     ];
 
     protected $casts = [
-        'services' => 'array', // convierte automáticamente JSON a array
+        'services' => 'array',
     ];
+
+    public function features()
+    {
+        return $this->belongsToMany(Feature::class, 'cabin_feature', 'cabin_id', 'feature_id');
+    }
+
+    public function images()
+    {
+        return $this->hasMany(CabinImage::class);
+    }
+
+    public function reservations()
+    {
+        return $this->hasMany(Reservation::class);
+    }
 }
