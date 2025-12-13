@@ -12,6 +12,7 @@ class CabinController extends Controller
     // GET /cabins
     public function index()
     {
+        
         $cabins = Cabin::with(['features', 'images'])->get();
         return response()->json($cabins, 200);
     }
@@ -26,6 +27,8 @@ class CabinController extends Controller
     // POST /cabins
     public function store(Request $request)
     {
+
+
         $validated = $request->validate([
             'name'            => 'required|string',
             'description'     => 'nullable|string',
@@ -35,6 +38,7 @@ class CabinController extends Controller
             'bathrooms'       => 'required|integer',
             'services'        => 'nullable|array',
             'status'          => 'required|string',
+
         ]);
 
         $cabin = Cabin::create($validated);

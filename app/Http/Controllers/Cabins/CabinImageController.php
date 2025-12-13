@@ -7,6 +7,7 @@ use App\Models\CabinImage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use App\Http\Controllers\Controller;
+use App\Services\PriceCalculatorService;
 
 class CabinImageController extends Controller
 {

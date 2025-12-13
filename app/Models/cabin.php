@@ -35,4 +35,8 @@ class Cabin extends Model
     {
         return $this->hasMany(Reservation::class);
     }
+       public function priceRules()
+    {
+        return $this->hasMany(CabinPriceRule::class);
+    }
 }

@@ -8,6 +8,7 @@ use App\Http\Controllers\Features\FeatureController;
 use App\Http\Controllers\Reservations\ReservationController;
 use App\Http\Controllers\Users\UsersController;
 use App\Http\Controllers\Cabins\CabinImageController;
+use App\Http\Controllers\Cabins\CabinPriceController;
 
 Route::group([
     'middleware' => 'api',
@@ -31,6 +32,10 @@ Route::middleware(['auth:api'])->group(function () {
     Route::put('/cabins/{id}' , CabinController::class . '@update');
     Route::post('/cabins/{id}/features', [CabinController::class, 'assignFeatures']);
     Route::post('/cabins/{id}/images', [CabinController::class, 'uploadImages']);
+    Route::post('/cabins/{cabin}/price', [CabinPriceController::class, 'calculate']);
+   
+
+
 
     Route::apiResource('reservations', ReservationController::class);
     Route::apiResource('features', FeatureController::class);
