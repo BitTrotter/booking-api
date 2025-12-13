@@ -3,78 +3,118 @@
 namespace App\Http\Controllers\Cabins;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Models\Cabin;
+use App\Models\CabinImage;
+use Illuminate\Http\Request;
 
 class CabinController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
+    // GET /cabins
     public function index()
     {
-       return Cabin::orderBy("id","desc")->get();   
+        $cabins = Cabin::with(['features', 'images'])->get();
+        return response()->json($cabins, 200);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
+    // GET /cabins/{id}
+    public function show($id)
+    {
+        $cabin = Cabin::with(['features', 'images'])->findOrFail($id);
+        return response()->json($cabin, 200);
+    }
+
+    // POST /cabins
     public function store(Request $request)
     {
-         $validated = $request->validate([
-        'name' => 'required|string',
-        'description' => 'nullable|string',
-        'price_per_night' => 'required|numeric|min:0',
-        'capacity' => 'required|integer|min:1',
-        'beds' => 'required|integer|min:1',
-        'bathrooms' => 'required|integer|min:1',
-        'services' => 'nullable|array',
-        'status' => 'in:available,maintenance'
-    ]);
+        $validated = $request->validate([
+            'name'            => 'required|string',
+            'description'     => 'nullable|string',
+            'price_per_night' => 'required|numeric',
+            'capacity'        => 'required|integer',
+            'beds'            => 'required|integer',
+            'bathrooms'       => 'required|integer',
+            'services'        => 'nullable|array',
+            'status'          => 'required|string',
+        ]);
 
-    $cabin = Cabin::create($validated);
+        $cabin = Cabin::create($validated);
 
-    return response()->json([
-        'message' => 'Cabin created',
-        'cabin' => $cabin
-    ], 201);
+        return response()->json($cabin, 201);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
+    // PUT /cabins/{id}
+    public function update(Request $request, $id)
     {
-        return Cabin::findOrFail($id);
+    
+        $cabin = Cabin::findOrFail($id);
+
+        $validated = $request->validate([
+            'name'            => 'sometimes|string',
+            'description'     => 'sometimes|string',
+            'price_per_night' => 'sometimes|numeric',
+            'capacity'        => 'sometimes|integer',
+            'beds'            => 'sometimes|integer',
+            'bathrooms'       => 'sometimes|integer',
+            'services'        => 'sometimes|array',
+            'status'          => 'sometimes|string',
+        ]);
+
+        $cabin->update($validated);
+
+        return response()->json($cabin, 200);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        $request->validate([
-        'name' => 'sometimes|required|string',
-        'description' => 'sometimes|nullable|string',
-        'price_per_night' => 'sometimes|required|numeric|min:0',
-        'capacity' => 'sometimes|required|integer|min:1',
-        'beds' => 'sometimes|required|integer|min:1',
-        'bathrooms' => 'sometimes|required|integer|min:1',
-        'services' => 'sometimes|nullable|array',
-        'status' => 'sometimes|in:available,maintenance'
-    ]); 
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
+    // DELETE /cabins/{id}
+    public function destroy($id)
     {
         $cabin = Cabin::findOrFail($id);
         $cabin->delete();
 
-        return response()->json([
-            'message' => 'Cabin deleted'
-        ], 200);
+        return response()->json(['message' => 'Cabin deleted'], 200);
+    }
+
+
+    // POST /cabins/{id}/features
+    public function assignFeatures(Request $request, $id)
+    {
+        try {
+        $cabin = Cabin::findOrFail($id);
+
+        $validated = $request->validate([
+            'features' => 'required|array',
+            'features.*' => 'integer|exists:features,id'
+        ]);
+
+        $cabin->features()->sync($validated['features']);
+
+        return response()->json(['message' => 'Features assigned'], 200);
+    }
+    catch (\Exception $e) {
+        return response()->json(['message' => 'Error assigning features', 'error' => $e->getMessage()], 500);
+    }
+    }
+
+
+    // POST /cabins/{id}/images
+    public function uploadImages(Request $request, $id)
+    {
+        $cabin = Cabin::findOrFail($id);
+
+        $validated = $request->validate([
+            'images' => 'required|array',
+            'images.*' => 'image|max:2048'
+        ]);
+
+        foreach ($validated['images'] as $image) {
+            $path = $image->store('cabins', 'public');
+
+            CabinImage::create([
+                'cabin_id' => $cabin->id,
+                'image_url' => $path,
+                'is_cover' => false
+            ]);
+        }
+
+        return response()->json(['message' => 'Images uploaded'], 201);
     }
 }

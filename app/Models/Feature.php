@@ -1,22 +1,15 @@
 <?php
 
-use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
+namespace App\Models;
 
-return new class extends Migration
+use Illuminate\Database\Eloquent\Model;
+
+class Feature extends Model
 {
-    public function up(): void
-    {
-        Schema::create('features', function (Blueprint $table) {
-            $table->id();
-            $table->string('name')->unique();
-            $table->timestamps();
-        });
-    }
+    protected $fillable = ['name', 'icon'];
 
-    public function down(): void
+    public function cabins()
     {
-        Schema::dropIfExists('features');
+        return $this->belongsToMany(Cabin::class, 'cabin_feature', 'feature_id', 'cabin_id');
     }
-};
+}
