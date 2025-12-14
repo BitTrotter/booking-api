@@ -9,6 +9,8 @@ use App\Http\Controllers\Reservations\ReservationController;
 use App\Http\Controllers\Users\UsersController;
 use App\Http\Controllers\Cabins\CabinImageController;
 use App\Http\Controllers\Cabins\CabinPriceController;
+use App\Http\Controllers\Cabins\CabinPriceRuleController;
+
 
 Route::group([
     'middleware' => 'api',
@@ -29,14 +31,16 @@ Route::group([
 Route::middleware(['auth:api'])->group(function () {
 
     Route::apiResource('cabins', CabinController::class);
-    Route::put('/cabins/{id}' , CabinController::class . '@update');
+    Route::put('/cabins/{id}', CabinController::class . '@update');
     Route::post('/cabins/{id}/features', [CabinController::class, 'assignFeatures']);
     Route::post('/cabins/{id}/images', [CabinController::class, 'uploadImages']);
     Route::post('/cabins/{cabin}/price', [CabinPriceController::class, 'calculate']);
-   
-
-
-
+    Route::get('/cabins/{cabin}/price-rules', [CabinPriceRuleController::class, 'index']);
+    Route::post('/cabins/{cabin}/price-rules', [CabinPriceRuleController::class, 'store'] );
+    // actualizar regla
+    Route::put('/price-rules/{priceRule}',[CabinPriceRuleController::class, 'update'] );
+    // eliminar regla
+    Route::delete( '/price-rules/{priceRule}', [CabinPriceRuleController::class, 'destroy']);
     Route::apiResource('reservations', ReservationController::class);
     Route::apiResource('features', FeatureController::class);
     Route::apiResource('users', UsersController::class);

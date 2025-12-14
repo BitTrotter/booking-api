@@ -12,6 +12,7 @@ use Carbon\Carbon;
 class CabinPriceController extends Controller
 {
     public function calculate(
+        
         Request $request,
         Cabin $cabin,
         PriceCalculatorService $priceCalculator
