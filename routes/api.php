@@ -26,27 +26,51 @@ Route::group([
 Route::group([
     'middleware' => ['api', 'auth:api'],
 ], function ($router) {
-    Route::resource('role', RoleController::class);
+    Route::resource('role', RoleController::class)->middleware([
+        'index' => 'permission:list_role',
+        'show' => 'permission:list_role',
+        'store' => 'permission:create_role',
+        'update' => 'permission:edit_role',
+        'destroy' => 'permission:delete_role',
+    ]);
 });
 Route::middleware(['auth:api'])->group(function () {
 
-    Route::apiResource('cabins', CabinController::class);
-    Route::put('/cabins/{id}', CabinController::class . '@update');
-    Route::post('/cabins/{id}/features', [CabinController::class, 'assignFeatures']);
-    Route::post('/cabins/{id}/images', [CabinController::class, 'uploadImages']);
-    Route::post('/cabins/{cabin}/price', [CabinPriceController::class, 'calculate']);
-    Route::get('/cabins/{cabin}/price-rules', [CabinPriceRuleController::class, 'index']);
-    Route::post('/cabins/{cabin}/price-rules', [CabinPriceRuleController::class, 'store'] );
+    Route::apiResource('cabins', CabinController::class)->middleware([
+        'index' => 'permission:list_cabin',
+        'show' => 'permission:show_cabin_details',
+        'store' => 'permission:create_cabin',
+        'update' => 'permission:edit_cabin',
+        'destroy' => 'permission:delete_cabin',
+    ]);
+    Route::put('/cabins/{id}', CabinController::class . '@update')->middleware('permission:edit_cabin');
+    Route::post('/cabins/{id}/features', [CabinController::class, 'assignFeatures'])->middleware('permission:edit_cabin');
+    Route::post('/cabins/{id}/images', [CabinController::class, 'uploadImages'])->middleware('permission:edit_cabin');
+    Route::post('/cabins/{cabin}/price', [CabinPriceController::class, 'calculate'])->middleware('permission:show_cabin_details');
+    Route::get('/cabins/{cabin}/price-rules', [CabinPriceRuleController::class, 'index'])->middleware('permission:show_cabin_details');
+    Route::post('/cabins/{cabin}/price-rules', [CabinPriceRuleController::class, 'store'])->middleware('permission:edit_cabin');
     // actualizar regla
-    Route::put('/price-rules/{priceRule}',[CabinPriceRuleController::class, 'update'] );
+    Route::put('/price-rules/{priceRule}', [CabinPriceRuleController::class, 'update'])->middleware('permission:edit_cabin');
     // eliminar regla
-    Route::delete( '/price-rules/{priceRule}', [CabinPriceRuleController::class, 'destroy']);
-    Route::apiResource('reservations', ReservationController::class);
+    Route::delete('/price-rules/{priceRule}', [CabinPriceRuleController::class, 'destroy'])->middleware('permission:delete_cabin');
+    Route::apiResource('reservations', ReservationController::class)->middleware([
+        'index' => 'permission:list_reservation',
+        'show' => 'permission:show_reservation_details',
+        'store' => 'permission:create_reservation',
+        'update' => 'permission:edit_reservation',
+        'destroy' => 'permission:cancel_reservation',
+    ]);
     Route::apiResource('features', FeatureController::class);
-    Route::apiResource('users', UsersController::class);
+    Route::apiResource('users', UsersController::class)->middleware([
+        'index' => 'permission:list_staff',
+        'show' => 'permission:list_staff',
+        'store' => 'permission:create_staff',
+        'update' => 'permission:edit_staff',
+        'destroy' => 'permission:delete_staff',
+    ]);
 
     // Cabin images
-    Route::get('/cabins/{id}/images', [CabinImageController::class, 'index']);
-    Route::post('/cabins/{id}/images', [CabinImageController::class, 'store']);
-    Route::delete('/cabins/{id}/images/{imageId}', [CabinImageController::class, 'destroy']);
+    Route::get('/cabins/{id}/images', [CabinImageController::class, 'index'])->middleware('permission:show_cabin_details');
+    Route::post('/cabins/{id}/images', [CabinImageController::class, 'store'])->middleware('permission:edit_cabin');
+    Route::delete('/cabins/{id}/images/{imageId}', [CabinImageController::class, 'destroy'])->middleware('permission:delete_cabin');
 });

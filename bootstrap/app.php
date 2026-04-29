@@ -5,6 +5,7 @@ use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Http\Request;
+use Spatie\Permission\Exceptions\UnauthorizedException;
  
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -26,6 +27,14 @@ return Application::configure(basePath: dirname(__DIR__))
                 return response()->json([
                     'message' => $e->getMessage(),
                 ], 401);
+            }
+        });
+
+        $exceptions->render(function (UnauthorizedException $e, Request $request) {
+            if ($request->is('api/*')) {
+                return response()->json([
+                    'message' => 'You do not have the required permission to access this resource.',
+                ], 403);
             }
         });
     })->create();
