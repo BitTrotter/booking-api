@@ -13,6 +13,8 @@ class Reservation extends Model
         'cabin_id',
         'start_date',
         'end_date',
+        'guest_count',
+        'total_days',
         'total_price',
         'status',
         
@@ -31,5 +33,10 @@ class Reservation extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function guests()
+    {
+        return $this->hasMany(ReservationGuest::class);
     }
 }
