@@ -6,15 +6,16 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use PHPOpenSourceSaver\JWTAuth\Contracts\JWTSubject; 
+use PHPOpenSourceSaver\JWTAuth\Contracts\JWTSubject;
 use Spatie\Permission\Traits\HasRoles;
-use Spatie\Permission\Models\Role;
 
 class User extends Authenticatable implements JWTSubject
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
-     use HasRoles;
+    use HasRoles;
+
+    protected string $guard_name = 'api';
 
     /**
      * The attributes that are mass assignable.
@@ -29,8 +30,6 @@ class User extends Authenticatable implements JWTSubject
         'last_name',
         'status',
         'profile_photo_path',
-        'role_id',
-
     ];
 
     /**
@@ -74,8 +73,9 @@ class User extends Authenticatable implements JWTSubject
     {
         return [];
     }
-    public function role() {
-        return $this->belongsTo(Role::class,"role_id");
-        
+
+    protected function getDefaultGuardName(): string
+    {
+        return $this->guard_name;
     }
 }

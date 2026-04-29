@@ -97,15 +97,15 @@ class AuthController extends Controller
             'access_token' => $token,
             'token_type' => 'bearer',
             'expires_in' => auth('api')->factory()->getTTL() * 60,
-            'user' =>[
-                "name"=> auth('api')->user()->name,
-                "email"=> auth('api')->user()->email,
-                "last_name"=> auth('api')->user()->last_name,
-                "status"=> auth('api')->user()->status,
-                "profile_photo_path"=> auth('api')->user()->profile_photo_path ? env('APP_URL').'/storage/'.auth('api')->user()->profile_photo_path: null,
-                "role"=> auth('api')->user()->role,
-
-            ]
+            'user' => [
+                'name' => auth('api')->user()->name,
+                'email' => auth('api')->user()->email,
+                'last_name' => auth('api')->user()->last_name,
+                'status' => auth('api')->user()->status,
+                'profile_photo_path' => auth('api')->user()->profile_photo_path ? env('APP_URL') . '/storage/' . auth('api')->user()->profile_photo_path : null,
+                'roles' => auth('api')->user()->getRoleNames(),
+                'permissions' => auth('api')->user()->getAllPermissions()->pluck('name'),
+            ],
         ]);
     }
 }
