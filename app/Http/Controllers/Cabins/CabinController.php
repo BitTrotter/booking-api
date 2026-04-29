@@ -12,7 +12,7 @@ class CabinController extends Controller
     // GET /cabins
     public function index()
     {
-        
+
         $cabins = Cabin::with(['features', 'images'])->get();
         return response()->json($cabins, 200);
     }
@@ -20,8 +20,11 @@ class CabinController extends Controller
     // GET /cabins/{id}
     public function show($id)
     {
+        $cabinImage = CabinImage::where('cabin_id', $id)->first();
         $cabin = Cabin::with(['features', 'images'])->findOrFail($id);
-        return response()->json($cabin, 200);
+        $response = $cabin->toArray();
+        $response['cover_image'] = $cabinImage ? asset('storage/' . $cabinImage->image_url) : null;
+        return response()->json($response, 200);
     }
 
     // POST /cabins
@@ -49,7 +52,7 @@ class CabinController extends Controller
     // PUT /cabins/{id}
     public function update(Request $request, $id)
     {
-    
+
         $cabin = Cabin::findOrFail($id);
 
         $validated = $request->validate([
@@ -82,20 +85,19 @@ class CabinController extends Controller
     public function assignFeatures(Request $request, $id)
     {
         try {
-        $cabin = Cabin::findOrFail($id);
+            $cabin = Cabin::findOrFail($id);
 
-        $validated = $request->validate([
-            'features' => 'required|array',
-            'features.*' => 'integer|exists:features,id'
-        ]);
+            $validated = $request->validate([
+                'features' => 'required|array',
+                'features.*' => 'integer|exists:features,id'
+            ]);
 
-        $cabin->features()->sync($validated['features']);
+            $cabin->features()->sync($validated['features']);
 
-        return response()->json(['message' => 'Features assigned'], 200);
-    }
-    catch (\Exception $e) {
-        return response()->json(['message' => 'Error assigning features', 'error' => $e->getMessage()], 500);
-    }
+            return response()->json(['message' => 'Features assigned'], 200);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Error assigning features', 'error' => $e->getMessage()], 500);
+        }
     }
 
 

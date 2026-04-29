@@ -45,7 +45,6 @@ Route::middleware(['auth:api'])->group(function () {
     ]);
     Route::put('/cabins/{id}', CabinController::class . '@update')->middleware('permission:edit_cabin');
     Route::post('/cabins/{id}/features', [CabinController::class, 'assignFeatures'])->middleware('permission:edit_cabin');
-    Route::post('/cabins/{id}/images', [CabinController::class, 'uploadImages'])->middleware('permission:edit_cabin');
     Route::post('/cabins/{cabin}/price', [CabinPriceController::class, 'calculate'])->middleware('permission:show_cabin_details');
     Route::get('/cabins/{cabin}/price-rules', [CabinPriceRuleController::class, 'index'])->middleware('permission:show_cabin_details');
     Route::post('/cabins/{cabin}/price-rules', [CabinPriceRuleController::class, 'store'])->middleware('permission:edit_cabin');

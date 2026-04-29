@@ -2,76 +2,100 @@
 
 namespace App\Http\Controllers\Cabins;
 
+use App\Http\Controllers\Controller;
 use App\Models\Cabin;
 use App\Models\CabinImage;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-use App\Http\Controllers\Controller;
-use App\Services\PriceCalculatorService;
 
 class CabinImageController extends Controller
 {
-    // SUBIR FOTO A UNA CABAÑA
     public function store(Request $request, $cabinId)
     {
-      
-        try{
-            
-        
         $request->validate([
-            'image' => 'required|image|max:4096', // 4MB
-            'is_cover' => 'nullable|boolean'
+            'image' => 'nullable|image|max:4096',
+            'images' => 'nullable|array',
+            'images.*' => 'image|max:4096',
+            'is_cover' => 'nullable|boolean',
         ]);
 
         $cabin = Cabin::findOrFail($cabinId);
+        $files = $this->extractFiles($request);
 
-        // Guardar la imagen
-        $path = $request->file('image')->store("cabins/{$cabinId}", 'public');
-        
-
-        // Si marcaron la imagen como portada, hacer reset
-        if ($request->is_cover == true) {
-            CabinImage::where('cabin_id', $cabinId)->update(['is_cover' => false]);
+        if (empty($files)) {
+            return response()->json([
+                'message' => 'You must upload at least one image using image or images[].',
+            ], 422);
         }
 
-        // Guardar en la BD
-        $image = CabinImage::create([
-            'cabin_id' => $cabinId,
-            'url' => $path,
-            'is_main' => $request->is_cover ?? false
-        ]);
+        $isCover = filter_var($request->input('is_cover', false), FILTER_VALIDATE_BOOLEAN);
 
-        return response()->json($image, 201);
-    }
-    catch (\Exception $e) {
-        return response()->json(['message' => 'Error uploading image', 'error' => $e->getMessage()], 500);
-    }
+        $images = DB::transaction(function () use ($files, $cabin, $isCover) {
+            if ($isCover) {
+                CabinImage::where('cabin_id', $cabin->id)->update(['is_main' => false]);
+            }
+
+            return collect($files)->values()->map(function ($file, $index) use ($cabin, $isCover) {
+                $path = $file->store("cabins/{$cabin->id}", 'public');
+
+                return CabinImage::create([
+                    'cabin_id' => $cabin->id,
+                    'url' => $path,
+                    'is_main' => $isCover && $index === 0,
+                ]);
+            });
+        });
+
+        return response()->json([
+            'message' => 'Images uploaded successfully',
+            'images' => $images->map(fn(CabinImage $image) => $this->transformImage($image)),
+        ], 201);
     }
 
-    // LISTAR IMÁGENES DE UNA CABAÑA
     public function index($cabinId)
     {
-        
-        try {
-        $cabin = Cabin::findOrFail($cabinId);
-        return response()->json($cabin->images, 200);
-        }
-        catch (\Exception $e) {
-            return response()->json(['message' => 'Error fetching images', 'error' => $e->getMessage()], 500);
-        }
+        $cabin = Cabin::with('images')->findOrFail($cabinId);
+
+        return response()->json([
+            'images' => $cabin->images->map(fn(CabinImage $image) => $this->transformImage($image)),
+        ], 200);
     }
 
-    // ELIMINAR UNA IMAGEN
     public function destroy($cabinId, $imageId)
     {
         $image = CabinImage::where('cabin_id', $cabinId)->findOrFail($imageId);
 
-        // Borrar archivo del storage
-        Storage::disk('public')->delete($image->image_url);
-
-        // Borrar registro
+        Storage::disk('public')->delete($image->url);
         $image->delete();
 
-        return response()->json(['message' => 'Imagen eliminada correctamente'], 200);
+        return response()->json(['message' => 'Image deleted successfully'], 200);
+    }
+
+    private function extractFiles(Request $request): array
+    {
+        $files = [];
+
+        if ($request->hasFile('image')) {
+            $files[] = $request->file('image');
+        }
+
+        if ($request->hasFile('images')) {
+            $files = [...$files, ...$request->file('images')];
+        }
+
+        return $files;
+    }
+
+    private function transformImage(CabinImage $image): array
+    {
+        return [
+            'id' => $image->id,
+            'cabin_id' => $image->cabin_id,
+            'url' => $image->url,
+            'public_url' => Storage::disk('public')->url($image->url),
+            'is_main' => (bool) $image->is_main,
+            'created_at' => $image->created_at,
+        ];
     }
 }
