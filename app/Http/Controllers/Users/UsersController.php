@@ -15,22 +15,23 @@ class UsersController extends Controller
     {
         $search = $request->get('search');
 
-        $users = User::where('name', 'like', '%' . $search . '%')
+        $users = User::with('roles')->where('name', 'like', '%' . $search . '%')
             ->orWhere('email', 'like', '%' . $search . '%')
-            ->orderBy("id","desc")
+            ->orderBy("id", "desc")
             ->get();
 
         return response()->json([
-            'users' => $users->map(function($user) {
+            'users' => $users->map(function ($user) {
                 return [
                     'id' => $user->id,
                     'name' => $user->name,
                     'email' => $user->email,
                     'created_at' => $user->created_at,
-                    'roles' => $user->pluck('name') 
-                    ];
-                    })  
-                    ], 200);
+                    'roles' => $user->roles->first()->name ?? null,
+                    'permissions' => $user->getAllPermissions()->pluck('name'),
+                ];
+            })
+        ], 200);
     }
 
     /**
@@ -48,8 +49,9 @@ class UsersController extends Controller
             'name' => $request->name,
             'email' => $request->email,
             'password' => bcrypt($request->password),
+
         ]);
-        if($request->roles && is_array($request->roles)){
+        if ($request->roles && is_array($request->roles)) {
             $user->syncRoles($request->roles);
         }
     }
@@ -60,8 +62,8 @@ class UsersController extends Controller
     public function show(string $id)
     {
         $user = User::find($id);
-        if(!$user){
-            return response()->json(['message' => 'User not found'], 404);            
+        if (!$user) {
+            return response()->json(['message' => 'User not found'], 404);
         }
         return response()->json([
             'user' => [
@@ -80,16 +82,16 @@ class UsersController extends Controller
     public function update(Request $request, string $id)
     {
         $user = User::find($id);
-        if(!$user){
-            return response()->json(['message' => 'User not found'], 404);            
+        if (!$user) {
+            return response()->json(['message' => 'User not found'], 404);
         }
         $user->name = $request->name;
         $user->email = $request->email;
-        if($request->password){
+        if ($request->password) {
             $user->password = bcrypt($request->password);
         }
         $user->save();
-        if($request->roles && is_array($request->roles)){
+        if ($request->roles && is_array($request->roles)) {
             $user->syncRoles($request->roles);
         }
         return response()->json(['message' => 'User updated successfully', 'user' => $user], 200);
@@ -101,8 +103,8 @@ class UsersController extends Controller
     public function destroy(string $id)
     {
         $user = User::find($id);
-        if(!$user){
-            return response()->json(['message' => 'User not found'], 404);            
+        if (!$user) {
+            return response()->json(['message' => 'User not found'], 404);
         }
         $user->delete();
         return response()->json(['message' => 'User deleted successfully'], 200);

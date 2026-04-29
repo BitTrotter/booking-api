@@ -17,6 +17,7 @@ return [
 
     'allowed_origins' => [
         'https://booking-frontend-rose.vercel.app',
+        'http://localhost:5173',
     ],
 
     'allowed_origins_patterns' => [],
