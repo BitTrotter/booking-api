@@ -73,6 +73,7 @@ class ReservationController extends Controller
 
                 $reservation = Reservation::create([
                     'user_id' => $user->id,
+                    'created_by' => $user->id,
                     'cabin_id' => $validated['cabin_id'],
                     'start_date' => $startDate,
                     'end_date' => $endDate,
@@ -134,5 +135,40 @@ class ReservationController extends Controller
         $reservation->delete();
 
         return response()->json(['message' => 'Reservation cancelled'], 200);
+    }
+
+    // GET /reservations/availability?cabin_id={id}&start_date={date}&end_date={date}
+    public function checkAvailability(Request $request)
+    {
+        $validated = $request->validate([
+            'cabin_id'   => 'required|exists:cabins,id',
+            'start_date' => 'required|date|after_or_equal:today',
+            'end_date'   => 'required|date|after:start_date',
+        ]);
+
+        $startDate = Carbon::parse($validated['start_date'])->toDateString();
+        $endDate   = Carbon::parse($validated['end_date'])->toDateString();
+
+        $cabin = Cabin::findOrFail($validated['cabin_id']);
+
+        $isBooked = Reservation::where('cabin_id', $validated['cabin_id'])
+            ->whereIn('status', ['pending', 'confirmed'])
+            ->where(function ($query) use ($startDate, $endDate) {
+                $query->where('start_date', '<', $endDate)
+                      ->where('end_date', '>', $startDate);
+            })
+            ->exists();
+
+        $days  = Carbon::parse($startDate)->diffInDays(Carbon::parse($endDate));
+        $total = $days * $cabin->price_per_night;
+
+        return response()->json([
+            'available'   => !$isBooked,
+            'cabin_id'    => $cabin->id,
+            'start_date'  => $startDate,
+            'end_date'    => $endDate,
+            'total_days'  => $days,
+            'total_price' => $total,
+        ]);
     }
 }

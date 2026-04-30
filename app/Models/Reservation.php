@@ -10,6 +10,7 @@ class Reservation extends Model
 {
     protected $fillable = [
         'user_id',
+        'created_by',
         'cabin_id',
         'start_date',
         'end_date',
@@ -17,7 +18,6 @@ class Reservation extends Model
         'total_days',
         'total_price',
         'status',
-        
     ];
 
     protected $casts = [
@@ -33,6 +33,11 @@ class Reservation extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function createdBy()
+    {
+        return $this->belongsTo(User::class, 'created_by');
     }
 
     public function guests()

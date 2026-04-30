@@ -52,6 +52,7 @@ Route::middleware(['auth:api'])->group(function () {
     Route::put('/price-rules/{priceRule}', [CabinPriceRuleController::class, 'update'])->middleware('permission:edit_cabin');
     // eliminar regla
     Route::delete('/price-rules/{priceRule}', [CabinPriceRuleController::class, 'destroy'])->middleware('permission:delete_cabin');
+    Route::get('/reservations/availability', [ReservationController::class, 'checkAvailability']);
     Route::apiResource('reservations', ReservationController::class)->middleware([
         'index' => 'permission:list_reservation',
         'show' => 'permission:show_reservation_details',
