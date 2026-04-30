@@ -7,6 +7,7 @@ use App\Http\Controllers\Cabins\CabinController;
 use App\Http\Controllers\Features\FeatureController;
 use App\Http\Controllers\Reservations\ReservationController;
 use App\Http\Controllers\Payments\PaymentController;
+use App\Http\Controllers\Permissions\PermissionController;
 use App\Http\Controllers\Users\UsersController;
 use App\Http\Controllers\Cabins\CabinImageController;
 use App\Http\Controllers\Cabins\CabinPriceController;
@@ -30,6 +31,10 @@ Route::group([
 Route::group([
     'middleware' => ['api', 'auth:api'],
 ], function ($router) {
+    Route::get('/permissions', [PermissionController::class, 'index'])->middleware('permission:list_role');
+    Route::post('/permissions', [PermissionController::class, 'store'])->middleware('permission:create_role');
+    Route::delete('/permissions/{id}', [PermissionController::class, 'destroy'])->middleware('permission:delete_role');
+
     Route::resource('role', RoleController::class)->middleware([
         'index' => 'permission:list_role',
         'show' => 'permission:list_role',
