@@ -3,15 +3,19 @@
 namespace App\Http\Controllers\Reservations;
 
 use App\Http\Controllers\Controller;
-use App\Models\Reservation;
+use App\Mail\ReservationCreatedMail;
+use App\Mail\ReservationStatusChangedMail;
 use App\Models\Cabin;
+use App\Models\Reservation;
+use App\Services\MailService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Carbon\Carbon;
 
 class ReservationController extends Controller
 {
+    public function __construct(private MailService $mail) {}
     // GET /reservations
     public function index()
     {
@@ -100,6 +104,8 @@ class ReservationController extends Controller
                 return response()->json(['message' => 'Cabin not available for selected dates'], 409);
             }
 
+            $this->mail->send($reservation->email, new ReservationCreatedMail($reservation));
+
             return response()->json($reservation, 201);
         } catch (\Throwable $e) {
             Log::error('Reservation store failed', [
@@ -121,13 +127,18 @@ class ReservationController extends Controller
     // PUT /reservations/{id}
     public function update(Request $request, $id)
     {
-        $reservation = Reservation::findOrFail($id);
+        $reservation = Reservation::with(['cabin', 'guests'])->findOrFail($id);
 
         $validated = $request->validate([
             'status' => 'required|in:pending,confirmed,cancelled'
         ]);
 
+        $previousStatus = $reservation->status;
         $reservation->update($validated);
+
+        if ($previousStatus !== $reservation->status) {
+            $this->mail->send($reservation->email, new ReservationStatusChangedMail($reservation, $previousStatus));
+        }
 
         return response()->json($reservation, 200);
     }
