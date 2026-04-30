@@ -18,6 +18,7 @@ return [
     'allowed_origins' => [
         'https://booking-frontend-rose.vercel.app',
         'http://localhost:5173',
+        'https://rockycabinsretreat.webflow.io/',
     ],
 
     'allowed_origins_patterns' => [],
