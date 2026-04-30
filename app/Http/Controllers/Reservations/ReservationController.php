@@ -15,14 +15,14 @@ class ReservationController extends Controller
     // GET /reservations
     public function index()
     {
-        $reservations = Reservation::with(['cabin', 'user', 'guests'])->get();
+        $reservations = Reservation::with(['cabin', 'user', 'guests', 'payment'])->get();
         return response()->json($reservations, 200);
     }
 
     // GET /reservations/{id}
     public function show($id)
     {
-        $reservation = Reservation::with(['cabin', 'user', 'guests'])->findOrFail($id);
+        $reservation = Reservation::with(['cabin', 'user', 'guests', 'payment'])->findOrFail($id);
         return response()->json($reservation, 200);
     }
 

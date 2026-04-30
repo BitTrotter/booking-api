@@ -6,11 +6,15 @@ use App\Http\Controllers\Roles\RoleController;
 use App\Http\Controllers\Cabins\CabinController;
 use App\Http\Controllers\Features\FeatureController;
 use App\Http\Controllers\Reservations\ReservationController;
+use App\Http\Controllers\Payments\PaymentController;
 use App\Http\Controllers\Users\UsersController;
 use App\Http\Controllers\Cabins\CabinImageController;
 use App\Http\Controllers\Cabins\CabinPriceController;
 use App\Http\Controllers\Cabins\CabinPriceRuleController;
 
+
+// Stripe webhook — sin auth, Stripe verifica con firma HMAC
+Route::post('/payments/webhook', [PaymentController::class, 'webhook']);
 
 Route::group([
     'middleware' => 'api',
@@ -73,4 +77,9 @@ Route::middleware(['auth:api'])->group(function () {
     Route::get('/cabins/{id}/images', [CabinImageController::class, 'index'])->middleware('permission:show_cabin_details');
     Route::post('/cabins/{id}/images', [CabinImageController::class, 'store'])->middleware('permission:edit_cabin');
     Route::delete('/cabins/{id}/images/{imageId}', [CabinImageController::class, 'destroy'])->middleware('permission:delete_cabin');
+
+    // Payments
+    Route::get('/payments', [PaymentController::class, 'index']);
+    Route::post('/payments/intent', [PaymentController::class, 'createIntent']);
+    Route::get('/payments/{reservation_id}', [PaymentController::class, 'show']);
 });

@@ -44,4 +44,9 @@ class Reservation extends Model
     {
         return $this->hasMany(ReservationGuest::class);
     }
+
+    public function payment()
+    {
+        return $this->hasOne(Payment::class);
+    }
 }
