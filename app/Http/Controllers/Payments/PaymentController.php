@@ -11,9 +11,13 @@ use Stripe\Exception\SignatureVerificationException;
 use Stripe\PaymentIntent;
 use Stripe\Stripe;
 use Stripe\Webhook;
+use App\Mail\ReservationStatusChangedMail;
+use App\Services\MailService;
 
 class PaymentController extends Controller
 {
+    public function __construct(private MailService $mail) {}
+
     // POST /payments/intent
     public function createIntent(Request $request)
     {
@@ -78,7 +82,6 @@ class PaymentController extends Controller
                 'currency'          => $payment->currency,
                 'reservation_id'    => $reservation->id,
             ], 201);
-
         } catch (\Throwable $e) {
             Log::error('Stripe createIntent failed', [
                 'message'        => $e->getMessage(),
@@ -169,7 +172,7 @@ class PaymentController extends Controller
         ]);
 
         $payment->reservation()->update(['status' => 'confirmed']);
-
+        $this->mail->send($payment->reservation->email, new ReservationStatusChangedMail($payment->reservation, 'pending'));
         Log::info('Payment confirmed', [
             'payment_id'     => $payment->id,
             'reservation_id' => $payment->reservation_id,
