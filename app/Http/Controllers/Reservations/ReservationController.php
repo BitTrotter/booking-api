@@ -34,6 +34,8 @@ class ReservationController extends Controller
                 'cabin_id' => 'required|exists:cabins,id',
                 'start_date' => 'required|date|after_or_equal:today',
                 'end_date' => 'required|date|after:start_date',
+                'email'  => 'required|email|max:255',
+                'phone'  => 'required|string|max:20',
                 'guests' => 'required|array|min:1',
                 'guests.*.full_name' => 'required|string|max:150',
                 'guests.*.guest_type' => 'required|in:adult,child',
@@ -72,15 +74,17 @@ class ReservationController extends Controller
                 }
 
                 $reservation = Reservation::create([
-                    'user_id' => $user->id,
+                    'user_id'    => $user->id,
                     'created_by' => $user->id,
-                    'cabin_id' => $validated['cabin_id'],
+                    'cabin_id'   => $validated['cabin_id'],
                     'start_date' => $startDate,
-                    'end_date' => $endDate,
+                    'end_date'   => $endDate,
                     'guest_count' => $guestCount,
+                    'email'      => $validated['email'],
+                    'phone'      => $validated['phone'],
                     'total_days' => $days,
                     'total_price' => $total,
-                    'status' => 'pending',
+                    'status'     => 'pending',
                 ]);
 
                 $reservation->guests()->createMany($validated['guests']);
