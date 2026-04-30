@@ -37,7 +37,7 @@ Route::middleware(['api', 'auth:api'])->group(function () {
     Route::post('/role',         [RoleController::class, 'store'])->middleware('permission:create_role,api');
     Route::get('/role/{role}',   [RoleController::class, 'show'])->middleware('permission:list_role,api');
     Route::put('/role/{role}',   [RoleController::class, 'update'])->middleware('permission:edit_role,api');
-    Route::delete('/role/{role}',[RoleController::class, 'destroy'])->middleware('permission:delete_role,api');
+    Route::delete('/role/{role}', [RoleController::class, 'destroy'])->middleware('permission:delete_role,api');
 });
 Route::middleware(['auth:api'])->group(function () {
 
@@ -46,7 +46,7 @@ Route::middleware(['auth:api'])->group(function () {
     Route::get('/cabins/{cabin}',   [CabinController::class, 'show'])->middleware('permission:show_cabin_details,api');
     Route::put('/cabins/{cabin}',   [CabinController::class, 'update'])->middleware('permission:edit_cabin,api');
     Route::patch('/cabins/{cabin}', [CabinController::class, 'update'])->middleware('permission:edit_cabin,api');
-    Route::delete('/cabins/{cabin}',[CabinController::class, 'destroy'])->middleware('permission:delete_cabin,api');
+    Route::delete('/cabins/{cabin}', [CabinController::class, 'destroy'])->middleware('permission:delete_cabin,api');
     Route::post('/cabins/{id}/features', [CabinController::class, 'assignFeatures'])->middleware('permission:edit_cabin,api');
     Route::post('/cabins/{cabin}/price', [CabinPriceController::class, 'calculate'])->middleware('permission:show_cabin_details,api');
     Route::get('/cabins/{cabin}/price-rules', [CabinPriceRuleController::class, 'index'])->middleware('permission:show_cabin_details,api');
