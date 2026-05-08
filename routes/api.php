@@ -80,6 +80,7 @@ Route::middleware(['auth:api'])->group(function () {
     // Cabin images
     Route::get('/cabins/{id}/images', [CabinImageController::class, 'index'])->middleware('permission:show_cabin_details,api');
     Route::post('/cabins/{id}/images', [CabinImageController::class, 'store'])->middleware('permission:edit_cabin,api');
+    Route::patch('/cabins/{id}/images/{imageId}/main', [CabinImageController::class, 'setMain'])->middleware('permission:edit_cabin,api');
     Route::delete('/cabins/{id}/images/{imageId}', [CabinImageController::class, 'destroy'])->middleware('permission:delete_cabin,api');
 
     // Payments

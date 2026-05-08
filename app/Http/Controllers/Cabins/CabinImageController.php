@@ -62,6 +62,21 @@ class CabinImageController extends Controller
         ], 200);
     }
 
+    public function setMain($cabinId, $imageId)
+    {
+        $image = CabinImage::where('cabin_id', $cabinId)->findOrFail($imageId);
+
+        DB::transaction(function () use ($image, $cabinId) {
+            CabinImage::where('cabin_id', $cabinId)->update(['is_main' => false]);
+            $image->update(['is_main' => true]);
+        });
+
+        return response()->json([
+            'message' => 'Main image updated successfully',
+            'image'   => $this->transformImage($image->fresh()),
+        ]);
+    }
+
     public function destroy($cabinId, $imageId)
     {
         $image = CabinImage::where('cabin_id', $cabinId)->findOrFail($imageId);
