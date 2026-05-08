@@ -17,8 +17,9 @@ use App\Http\Controllers\Public\PublicCabinController;
 
 // Endpoints públicos — sin auth, solo lectura, rate limited
 Route::prefix('public')->middleware('throttle:60,1')->group(function () {
-    Route::get('/cabins',      [PublicCabinController::class, 'index']);
-    Route::get('/cabins/{id}', [PublicCabinController::class, 'show']);
+    Route::get('/cabins',                    [PublicCabinController::class, 'index']);
+    Route::get('/cabins/{id}',               [PublicCabinController::class, 'show']);
+    Route::get('/reservations/availability', [ReservationController::class, 'checkAvailability']);
 });
 
 // Stripe webhook — sin auth, Stripe verifica con firma HMAC
@@ -60,7 +61,6 @@ Route::middleware(['auth:api'])->group(function () {
     Route::post('/cabins/{cabin}/price-rules', [CabinPriceRuleController::class, 'store'])->middleware('permission:edit_cabin,api');
     Route::put('/price-rules/{priceRule}', [CabinPriceRuleController::class, 'update'])->middleware('permission:edit_cabin,api');
     Route::delete('/price-rules/{priceRule}', [CabinPriceRuleController::class, 'destroy'])->middleware('permission:delete_cabin,api');
-    Route::get('/reservations/availability', [ReservationController::class, 'checkAvailability']);
     Route::get('/reservations',                  [ReservationController::class, 'index'])->middleware('permission:list_reservation,api');
     Route::post('/reservations',                 [ReservationController::class, 'store'])->middleware('permission:create_reservation,api');
     Route::get('/reservations/{reservation}',    [ReservationController::class, 'show'])->middleware('permission:show_reservation_details,api');
