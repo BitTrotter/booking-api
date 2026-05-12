@@ -41,6 +41,11 @@ class CabinController extends Controller
             'bathrooms'       => 'required|integer',
             'services'        => 'nullable|array',
             'status'          => 'required|string',
+            'description_title' => 'nullable|string',
+            'check_in' => 'nullable|string',
+            'check_out' => 'nullable|string',
+            'lat' => 'nullable|numeric|between:-90,90',
+            'lng' => 'nullable|numeric|between:-180,180',
 
         ]);
 
@@ -64,6 +69,11 @@ class CabinController extends Controller
             'bathrooms'       => 'sometimes|integer',
             'services'        => 'sometimes|array',
             'status'          => 'sometimes|string',
+            'description_title' => 'sometimes|string',
+            'check_in' => 'sometimes|string',
+            'check_out' => 'sometimes|string',
+            'lat' => 'sometimes|numeric|between:-90,90',
+            'lng' => 'sometimes|numeric|between:-180,180',
         ]);
 
         $cabin->update($validated);

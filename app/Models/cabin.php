@@ -8,13 +8,18 @@ class Cabin extends Model
 {
     protected $fillable = [
         'name',
+        'description_title',
         'description',
+        'check_in',
+        'check_out',
         'price_per_night',
         'capacity',
         'beds',
         'bathrooms',
         'services',
-        'status'
+        'status',
+        'lat',
+        'lng'
     ];
 
     protected $casts = [
