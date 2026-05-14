@@ -37,7 +37,7 @@ class CabinImageController extends Controller
             }
 
             return collect($files)->values()->map(function ($file, $index) use ($cabin, $isCover) {
-                $path = $file->store("cabins/{$cabin->id}", 'public');
+                $path = $file->store("cabins/{$cabin->id}", 's3');
 
                 return CabinImage::create([
                     'cabin_id' => $cabin->id,
@@ -81,7 +81,7 @@ class CabinImageController extends Controller
     {
         $image = CabinImage::where('cabin_id', $cabinId)->findOrFail($imageId);
 
-        Storage::disk('public')->delete($image->url);
+        Storage::disk('s3')->delete($image->url);
         $image->delete();
 
         return response()->json(['message' => 'Image deleted successfully'], 200);
@@ -104,11 +104,14 @@ class CabinImageController extends Controller
 
     private function transformImage(CabinImage $image): array
     {
+        /** @var \Illuminate\Filesystem\FilesystemAdapter $s3 */
+        $s3 = Storage::disk('s3');
+
         return [
             'id' => $image->id,
             'cabin_id' => $image->cabin_id,
             'url' => $image->url,
-            'public_url' => Storage::disk('public')->url($image->url),
+            'public_url' => $s3->url($image->url),
             'is_main' => (bool) $image->is_main,
             'created_at' => $image->created_at,
         ];
