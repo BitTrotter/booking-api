@@ -27,7 +27,7 @@ class CabinDetailResource extends JsonResource
                 'icon' => $f->icon,
             ]),
             'images'          => $this->images->map(fn($img) => [
-                'url'     => asset('storage/' . $img->url),
+                'url'     => $img->public_url,
                 'is_main' => (bool) $img->is_main,
             ]),
         ];
