@@ -3,6 +3,7 @@
 namespace App\Http\Resources\Public;
 
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Storage;
 
 class CabinDetailResource extends JsonResource
 {
@@ -26,10 +27,14 @@ class CabinDetailResource extends JsonResource
                 'name' => $f->name,
                 'icon' => $f->icon,
             ]),
-            'images'          => $this->images->map(fn($img) => [
-                'url'     => $img->public_url,
-                'is_main' => (bool) $img->is_main,
-            ]),
+            'images'          => $this->images->map(function ($img) {
+                /** @var \Illuminate\Filesystem\FilesystemAdapter $s3 */
+                $s3 = Storage::disk('s3');
+                return [
+                    'url'     => $s3->url($img->url),
+                    'is_main' => (bool) $img->is_main,
+                ];
+            }),
         ];
     }
 }
