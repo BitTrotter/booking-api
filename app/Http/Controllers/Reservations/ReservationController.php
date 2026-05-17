@@ -170,7 +170,7 @@ class ReservationController extends Controller
             ->whereIn('status', ['pending', 'confirmed'])
             ->where(function ($query) use ($startDate, $endDate) {
                 $query->where('start_date', '<', $endDate)
-                      ->where('end_date', '>', $startDate);
+                    ->where('end_date', '>', $startDate);
             })
             ->exists();
 

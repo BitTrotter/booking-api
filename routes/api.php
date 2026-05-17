@@ -13,13 +13,15 @@ use App\Http\Controllers\Cabins\CabinImageController;
 use App\Http\Controllers\Cabins\CabinPriceController;
 use App\Http\Controllers\Cabins\CabinPriceRuleController;
 use App\Http\Controllers\Public\PublicCabinController;
+use App\Http\Controllers\Public\PublicReservationController;
 
 
-// Endpoints públicos — sin auth, solo lectura, rate limited
+// Endpoints públicos — sin auth, rate limited
 Route::prefix('public')->middleware('throttle:60,1')->group(function () {
     Route::get('/cabins',                    [PublicCabinController::class, 'index']);
     Route::get('/cabins/{id}',               [PublicCabinController::class, 'show']);
     Route::get('/reservations/availability', [ReservationController::class, 'checkAvailability']);
+    Route::post('/reservations',             [PublicReservationController::class, 'store']);
 });
 
 // Stripe webhook — sin auth, Stripe verifica con firma HMAC
