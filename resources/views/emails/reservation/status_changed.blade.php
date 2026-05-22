@@ -3,6 +3,8 @@
 
 @if ($reservation->status === 'confirmed')
 Tu reservación ha sido **confirmada**. ¡Te esperamos!
+@elseif ($reservation->status === 'active')
+¡Tu estadía **comienza hoy**! Recuerda llevar tu confirmación. ¡Bienvenido!
 @elseif ($reservation->status === 'cancelled')
 Tu reservación ha sido **cancelada**. Si tienes dudas, contáctanos.
 @else

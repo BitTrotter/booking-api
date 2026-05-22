@@ -58,7 +58,7 @@ class ReservationController extends Controller
 
                 // Solape real: existing.start < new.end AND existing.end > new.start
                 $existing = Reservation::where('cabin_id', $validated['cabin_id'])
-                    ->whereIn('status', ['pending', 'confirmed'])
+                    ->whereIn('status', ['pending', 'confirmed', 'active'])
                     ->where(function ($query) use ($startDate, $endDate) {
                         $query->where('start_date', '<', $endDate)
                             ->where('end_date', '>', $startDate);
@@ -130,7 +130,7 @@ class ReservationController extends Controller
         $reservation = Reservation::with(['cabin', 'guests'])->findOrFail($id);
 
         $validated = $request->validate([
-            'status' => 'required|in:pending,confirmed,cancelled'
+            'status' => 'required|in:pending,confirmed,active,cancelled'
         ]);
 
         $previousStatus = $reservation->status;
@@ -167,7 +167,7 @@ class ReservationController extends Controller
         $cabin = Cabin::findOrFail($validated['cabin_id']);
 
         $isBooked = Reservation::where('cabin_id', $validated['cabin_id'])
-            ->whereIn('status', ['pending', 'confirmed'])
+            ->whereIn('status', ['pending', 'confirmed', 'active'])
             ->where(function ($query) use ($startDate, $endDate) {
                 $query->where('start_date', '<', $endDate)
                     ->where('end_date', '>', $startDate);

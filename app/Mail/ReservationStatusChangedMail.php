@@ -22,6 +22,7 @@ class ReservationStatusChangedMail extends Mailable
     {
         $subjects = [
             'confirmed'  => 'Reservación confirmada #' . $this->reservation->id,
+            'active'     => '¡Tu estadía comienza hoy! Reservación #' . $this->reservation->id,
             'cancelled'  => 'Reservación cancelada #' . $this->reservation->id,
             'pending'    => 'Reservación en revisión #' . $this->reservation->id,
         ];

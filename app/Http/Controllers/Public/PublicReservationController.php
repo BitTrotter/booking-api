@@ -42,7 +42,7 @@ class PublicReservationController extends Controller
                     ->firstOrFail();
 
                 $overlaps = Reservation::where('cabin_id', $validated['cabin_id'])
-                    ->whereIn('status', ['pending', 'confirmed'])
+                    ->whereIn('status', ['pending', 'confirmed', 'active'])
                     ->where(function ($q) use ($startDate, $endDate) {
                         $q->where('start_date', '<', $endDate)
                           ->where('end_date', '>', $startDate);
