@@ -25,6 +25,7 @@ class ReservationStatusChangedMail extends Mailable
             'active'     => '¡Tu estadía comienza hoy! Reservación #' . $this->reservation->id,
             'cancelled'  => 'Reservación cancelada #' . $this->reservation->id,
             'pending'    => 'Reservación en revisión #' . $this->reservation->id,
+            'completed'  => 'Tu estadía ha finalizado — Reservación #' . $this->reservation->id,
         ];
 
         return new Envelope(
