@@ -3,6 +3,7 @@
 namespace App\Http\Resources\Public;
 
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Storage;
 
 class CabinListResource extends JsonResource
 {
@@ -18,7 +19,7 @@ class CabinListResource extends JsonResource
             'capacity'        => $this->capacity,
             'beds'            => $this->beds,
             'bathrooms'       => $this->bathrooms,
-            'cover_image'     => $mainImage ? asset('storage/' . $mainImage->url) : null,
+            'cover_image'     => $mainImage ? Storage::disk('s3')->url($mainImage->url) : null,
             'features'        => $this->features->map(fn($f) => [
                 'name' => $f->name,
                 'icon' => $f->icon,

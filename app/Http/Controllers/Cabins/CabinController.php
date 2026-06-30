@@ -20,10 +20,11 @@ class CabinController extends Controller
     // GET /cabins/{id}
     public function show($id)
     {
-        $cabinImage = CabinImage::where('cabin_id', $id)->first();
         $cabin = Cabin::with(['features', 'images'])->findOrFail($id);
+        $mainImage = $cabin->images->firstWhere('is_main', true) ?? $cabin->images->first();
+
         $response = $cabin->toArray();
-        $response['cover_image'] = $cabinImage ? asset('storage/' . $cabinImage->image_url) : null;
+        $response['cover_image'] = $mainImage ? asset('storage/' . $mainImage->url) : null;
         return response()->json($response, 200);
     }
 
