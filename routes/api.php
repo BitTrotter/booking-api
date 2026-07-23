@@ -23,6 +23,8 @@ Route::prefix('public')->middleware('throttle:60,1')->group(function () {
     Route::get('/cabins/{id}',               [PublicCabinController::class, 'show']);
     Route::get('/reservations/availability', [ReservationController::class, 'checkAvailability']);
     Route::post('/reservations',             [PublicReservationController::class, 'store']);
+    Route::post('/checkout/token',           [PublicReservationController::class, 'createCheckoutToken']);
+    Route::get('/checkout/reservations/{token}', [PublicReservationController::class, 'getReservationFromCheckoutToken']);
     Route::post('/payments/intent',          [PublicPaymentController::class, 'createIntent']);
 });
 

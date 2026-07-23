@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Public;
 use App\Http\Controllers\Controller;
 use App\Mail\ReservationCreatedMail;
 use App\Models\Cabin;
+use App\Models\CheckoutToken;
 use App\Models\Reservation;
 use App\Services\MailService;
 use Carbon\Carbon;
@@ -12,6 +13,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class PublicReservationController extends Controller
 {
@@ -94,15 +96,16 @@ class PublicReservationController extends Controller
             return response()->json([
                 'message' => 'Reservation created successfully',
                 'data'    => [
-                    'id'          => $reservation->id,
-                    'cabin'       => $reservation->cabin->name ?? null,
-                    'start_date'  => $reservation->start_date,
-                    'end_date'    => $reservation->end_date,
-                    'total_days'  => $reservation->total_days,
-                    'total_price' => $reservation->total_price,
-                    'status'      => $reservation->status,
-                    'email'       => $reservation->email,
-                    'guests'      => $reservation->guests,
+                    'id'              => $reservation->id,
+                    'reservation_id'  => $reservation->id,
+                    'cabin'           => $reservation->cabin->name ?? null,
+                    'start_date'      => $reservation->start_date,
+                    'end_date'        => $reservation->end_date,
+                    'total_days'      => $reservation->total_days,
+                    'total_price'     => $reservation->total_price,
+                    'status'          => $reservation->status,
+                    'email'           => $reservation->email,
+                    'guests'          => $reservation->guests,
                 ],
             ], 201);
         } catch (\Throwable $e) {
@@ -118,5 +121,78 @@ class PublicReservationController extends Controller
 
             return response()->json($response, 500);
         }
+    }
+
+    public function createCheckoutToken(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'reservation_id' => 'required|exists:reservations,id',
+        ]);
+
+        $reservation = Reservation::findOrFail($validated['reservation_id']);
+
+        if ($reservation->user_id !== null) {
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
+
+        if ($reservation->status !== 'pending') {
+            return response()->json(['message' => 'Reservation is not in pending state'], 422);
+        }
+
+        $tokenValue = Str::random(64);
+
+        $checkoutToken = CheckoutToken::updateOrCreate(
+            ['reservation_id' => $reservation->id],
+            [
+                'token' => $tokenValue,
+                'expires_at' => now()->addHours(2),
+                'used_at' => null,
+            ]
+        );
+
+        return response()->json([
+            'message' => 'Checkout token generated successfully',
+            'data' => [
+                'reservation_id' => $reservation->id,
+                'checkout_token' => $checkoutToken->token,
+                'expires_at' => $checkoutToken->expires_at->toISOString(),
+            ],
+        ], 201);
+    }
+
+    public function getReservationFromCheckoutToken(string $token): JsonResponse
+    {
+        $checkoutToken = CheckoutToken::where('token', $token)
+            ->whereNull('used_at')
+            ->where('expires_at', '>', now())
+            ->first();
+
+        if (!$checkoutToken) {
+            return response()->json(['message' => 'Checkout token is invalid or expired'], 404);
+        }
+
+        $checkoutToken->forceFill(['used_at' => now()])->save();
+
+        $reservation = $checkoutToken->reservation()->with(['cabin', 'guests'])->first();
+
+        if (!$reservation) {
+            return response()->json(['message' => 'Reservation not found'], 404);
+        }
+
+        return response()->json([
+            'message' => 'Reservation loaded successfully',
+            'data' => [
+                'id' => $reservation->id,
+                'reservation_id' => $reservation->id,
+                'cabin' => $reservation->cabin->name ?? null,
+                'start_date' => $reservation->start_date,
+                'end_date' => $reservation->end_date,
+                'total_days' => $reservation->total_days,
+                'total_price' => $reservation->total_price,
+                'status' => $reservation->status,
+                'email' => $reservation->email,
+                'guests' => $reservation->guests,
+            ],
+        ]);
     }
 }

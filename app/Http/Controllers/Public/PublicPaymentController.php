@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Public;
 
 use App\Http\Controllers\Controller;
+use App\Models\CheckoutToken;
 use App\Models\Payment;
 use App\Models\Reservation;
 use Illuminate\Http\JsonResponse;
@@ -17,10 +18,33 @@ class PublicPaymentController extends Controller
     public function createIntent(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'reservation_id' => 'required|exists:reservations,id',
+            'reservation_id' => 'nullable|exists:reservations,id',
+            'checkout_token' => 'nullable|string',
         ]);
 
-        $reservation = Reservation::with('cabin')->findOrFail($validated['reservation_id']);
+        $reservation = null;
+
+        if (!empty($validated['checkout_token'])) {
+            $checkoutToken = CheckoutToken::where('token', $validated['checkout_token'])
+                ->whereNull('used_at')
+                ->where('expires_at', '>', now())
+                ->first();
+
+            if (!$checkoutToken) {
+                return response()->json(['message' => 'Checkout token is invalid or expired'], 404);
+            }
+
+            $reservation = Reservation::with('cabin')->find($checkoutToken->reservation_id);
+            $checkoutToken->forceFill(['used_at' => now()])->save();
+        } elseif (!empty($validated['reservation_id'])) {
+            $reservation = Reservation::with('cabin')->findOrFail($validated['reservation_id']);
+        } else {
+            return response()->json(['message' => 'Either reservation_id or checkout_token is required'], 422);
+        }
+
+        if (!$reservation) {
+            return response()->json(['message' => 'Reservation not found'], 404);
+        }
 
         // Only public (guest) reservations can use this endpoint
         if ($reservation->user_id !== null) {
