@@ -5,13 +5,13 @@ namespace App\Http\Controllers\Public;
 use App\Http\Controllers\Controller;
 use App\Mail\ReservationCreatedMail;
 use App\Models\Cabin;
-use App\Models\CheckoutToken;
 use App\Models\Reservation;
 use App\Services\MailService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
@@ -34,7 +34,9 @@ class PublicReservationController extends Controller
                 'guests.*.guest_type'    => 'required|in:adult,child',
             ]);
 
-            $reservation = DB::transaction(function () use ($validated) {
+            $confirmationToken = Str::random(64);
+
+            $reservation = DB::transaction(function () use ($validated, $confirmationToken) {
                 $startDate = Carbon::parse($validated['start_date'])->toDateString();
                 $endDate   = Carbon::parse($validated['end_date'])->toDateString();
 
@@ -76,6 +78,7 @@ class PublicReservationController extends Controller
                     'total_days'  => $days,
                     'total_price' => $total,
                     'status'      => 'pending',
+                    'confirmation_token' => Hash::make($confirmationToken),
                 ]);
 
                 $reservation->guests()->createMany($validated['guests']);
@@ -96,16 +99,12 @@ class PublicReservationController extends Controller
             return response()->json([
                 'message' => 'Reservation created successfully',
                 'data'    => [
-                    'id'              => $reservation->id,
                     'reservation_id'  => $reservation->id,
-                    'cabin'           => $reservation->cabin->name ?? null,
-                    'start_date'      => $reservation->start_date,
-                    'end_date'        => $reservation->end_date,
-                    'total_days'      => $reservation->total_days,
                     'total_price'     => $reservation->total_price,
                     'status'          => $reservation->status,
-                    'email'           => $reservation->email,
-                    'guests'          => $reservation->guests,
+                    // Store this only on the client that created the reservation.
+                    // It authorizes the public confirmation lookup after payment.
+                    'confirmation_token' => $confirmationToken,
                 ],
             ], 201);
         } catch (\Throwable $e) {
@@ -123,64 +122,32 @@ class PublicReservationController extends Controller
         }
     }
 
-    public function createCheckoutToken(Request $request): JsonResponse
+    // GET /api/public/reservations/{reservation}/confirmation?token={confirmation_token}
+    public function confirmation(Request $request, Reservation $reservation): JsonResponse
     {
         $validated = $request->validate([
-            'reservation_id' => 'required|exists:reservations,id',
+            'token' => 'required|string',
         ]);
 
-        $reservation = Reservation::findOrFail($validated['reservation_id']);
-
-        if ($reservation->user_id !== null) {
-            return response()->json(['message' => 'Forbidden'], 403);
-        }
-
-        if ($reservation->status !== 'pending') {
-            return response()->json(['message' => 'Reservation is not in pending state'], 422);
-        }
-
-        $tokenValue = Str::random(64);
-
-        $checkoutToken = CheckoutToken::updateOrCreate(
-            ['reservation_id' => $reservation->id],
-            [
-                'token' => $tokenValue,
-                'expires_at' => now()->addHours(2),
-                'used_at' => null,
-            ]
-        );
-
-        return response()->json([
-            'message' => 'Checkout token generated successfully',
-            'data' => [
-                'reservation_id' => $reservation->id,
-                'checkout_token' => $checkoutToken->token,
-                'expires_at' => $checkoutToken->expires_at->toISOString(),
-            ],
-        ], 201);
-    }
-
-    public function getReservationFromCheckoutToken(string $token): JsonResponse
-    {
-        $checkoutToken = CheckoutToken::where('token', $token)
-            ->whereNull('used_at')
-            ->where('expires_at', '>', now())
-            ->first();
-
-        if (!$checkoutToken) {
-            return response()->json(['message' => 'Checkout token is invalid or expired'], 404);
-        }
-
-        $checkoutToken->forceFill(['used_at' => now()])->save();
-
-        $reservation = $checkoutToken->reservation()->with(['cabin', 'guests'])->first();
-
-        if (!$reservation) {
+        if (
+            $reservation->user_id !== null
+            || empty($reservation->confirmation_token)
+            || !Hash::check($validated['token'], $reservation->confirmation_token)
+        ) {
             return response()->json(['message' => 'Reservation not found'], 404);
         }
 
+        if ($reservation->status !== 'confirmed') {
+            return response()->json([
+                'message' => 'Payment confirmation is still pending',
+                'status' => $reservation->status,
+            ], 202);
+        }
+
+        $reservation->load(['cabin', 'guests']);
+
         return response()->json([
-            'message' => 'Reservation loaded successfully',
+            'message' => 'Reservation confirmed successfully',
             'data' => [
                 'id' => $reservation->id,
                 'reservation_id' => $reservation->id,

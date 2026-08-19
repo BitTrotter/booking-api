@@ -20,6 +20,11 @@ class Reservation extends Model
         'total_days',
         'total_price',
         'status',
+        'confirmation_token',
+    ];
+
+    protected $hidden = [
+        'confirmation_token',
     ];
 
     protected $casts = [

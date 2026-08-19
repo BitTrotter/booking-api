@@ -8,6 +8,16 @@ return new class extends Migration
 {
     public function up(): void
     {
+        Schema::table('reservations', function (Blueprint $table) {
+            // A hash is stored; the plaintext value is only returned when a public reservation is created.
+            $table->string('confirmation_token')->nullable()->after('status');
+        });
+
+        Schema::dropIfExists('checkout_tokens');
+    }
+
+    public function down(): void
+    {
         Schema::create('checkout_tokens', function (Blueprint $table) {
             $table->id();
             $table->foreignId('reservation_id')->constrained()->cascadeOnDelete();
@@ -16,10 +26,9 @@ return new class extends Migration
             $table->timestamp('used_at')->nullable();
             $table->timestamps();
         });
-    }
 
-    public function down(): void
-    {
-        Schema::dropIfExists('checkout_tokens');
+        Schema::table('reservations', function (Blueprint $table) {
+            $table->dropColumn('confirmation_token');
+        });
     }
 };

@@ -39,7 +39,7 @@ class PublicCheckoutFlowTest extends TestCase
             ->assertJsonPath('data.reservation_id', 1);
     }
 
-    public function test_checkout_token_can_be_generated_and_used_to_load_reservation(): void
+    public function test_confirmation_requires_a_valid_token_and_a_confirmed_reservation(): void
     {
         $cabin = Cabin::create([
             'name' => 'Cabaña de prueba',
@@ -61,20 +61,22 @@ class PublicCheckoutFlowTest extends TestCase
             'total_days' => 2,
             'total_price' => 2400,
             'status' => 'pending',
+            'confirmation_token' => bcrypt('confirmation-token'),
         ]);
 
-        $response = $this->postJson('/api/public/checkout/token', [
-            'reservation_id' => $reservation->id,
-        ]);
+        $url = '/api/public/reservations/' . $reservation->id . '/confirmation?token=confirmation-token';
 
-        $response->assertStatus(201)
-            ->assertJsonPath('data.reservation_id', $reservation->id)
-            ->assertJsonStructure(['data' => ['checkout_token']]);
+        $this->getJson($url)
+            ->assertStatus(202)
+            ->assertJsonPath('status', 'pending');
 
-        $token = $response->json('data.checkout_token');
+        $reservation->update(['status' => 'confirmed']);
 
-        $this->getJson('/api/public/checkout/reservations/' . $token)
+        $this->getJson($url)
             ->assertStatus(200)
             ->assertJsonPath('data.id', $reservation->id);
+
+        $this->getJson('/api/public/reservations/' . $reservation->id . '/confirmation?token=invalid')
+            ->assertStatus(404);
     }
 }
