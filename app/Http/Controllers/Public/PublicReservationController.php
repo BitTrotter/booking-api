@@ -155,6 +155,8 @@ class PublicReservationController extends Controller
                 'start_date' => $reservation->start_date,
                 'end_date' => $reservation->end_date,
                 'total_days' => $reservation->total_days,
+                'guest_count' => $reservation->guest_count,
+                'price_per_night' => $reservation->cabin->price_per_night ?? null,
                 'total_price' => $reservation->total_price,
                 'status' => $reservation->status,
                 'email' => $reservation->email,
