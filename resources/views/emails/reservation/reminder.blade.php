@@ -23,6 +23,8 @@
 - {{ $guest->full_name }} — {{ $guest->guest_type === 'adult' ? 'Adulto' : 'Niño' }}
 @endforeach
 
+Total registrados: {{ $reservation->guest_count }}
+
 ¡Te esperamos mañana! Si tienes alguna duda, no dudes en contactarnos.
 
 Gracias,<br>

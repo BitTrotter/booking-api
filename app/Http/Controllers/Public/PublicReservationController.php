@@ -29,9 +29,7 @@ class PublicReservationController extends Controller
                 'end_date'               => 'required|date|after:start_date',
                 'email'                  => 'required|email|max:255',
                 'phone'                  => 'required|string|max:20',
-                'guests'                 => 'required|array|min:1',
-                'guests.*.full_name'     => 'required|string|max:150',
-                'guests.*.guest_type'    => 'required|in:adult,child',
+                'guest_number'           => 'required|integer|min:1',
             ]);
 
             $confirmationToken = Str::random(64);
@@ -57,7 +55,7 @@ class PublicReservationController extends Controller
                     return null;
                 }
 
-                $guestCount = count($validated['guests']);
+                $guestCount = $validated['guest_number'];
 
                 if ($guestCount > $cabin->capacity) {
                     return false;
@@ -81,9 +79,7 @@ class PublicReservationController extends Controller
                     'confirmation_token' => Hash::make($confirmationToken),
                 ]);
 
-                $reservation->guests()->createMany($validated['guests']);
-
-                return $reservation->load(['cabin', 'guests']);
+                return $reservation->load('cabin');
             });
 
             if ($reservation === false) {
@@ -144,7 +140,7 @@ class PublicReservationController extends Controller
             ], 202);
         }
 
-        $reservation->load(['cabin', 'guests']);
+        $reservation->load('cabin');
 
         return response()->json([
             'message' => 'Reservation confirmed successfully',
@@ -160,7 +156,6 @@ class PublicReservationController extends Controller
                 'total_price' => $reservation->total_price,
                 'status' => $reservation->status,
                 'email' => $reservation->email,
-                'guests' => $reservation->guests,
             ],
         ]);
     }

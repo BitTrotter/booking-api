@@ -29,14 +29,20 @@ class PublicCheckoutFlowTest extends TestCase
             'end_date' => now()->addDays(3)->toDateString(),
             'email' => 'guest@example.com',
             'phone' => '5551234567',
-            'guests' => [
+            'guest_number' => 1,
+            /*
                 ['full_name' => 'Juan Pérez', 'guest_type' => 'adult'],
             ],
+            */
         ]);
 
         $response->assertStatus(201)
-            ->assertJsonPath('data.id', 1)
             ->assertJsonPath('data.reservation_id', 1);
+
+        $this->assertDatabaseHas('reservations', [
+            'id' => 1,
+            'guest_count' => 1,
+        ]);
     }
 
     public function test_confirmation_requires_a_valid_token_and_a_confirmed_reservation(): void

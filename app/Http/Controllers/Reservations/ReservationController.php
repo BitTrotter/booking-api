@@ -19,14 +19,14 @@ class ReservationController extends Controller
     // GET /reservations
     public function index()
     {
-        $reservations = Reservation::with(['cabin', 'user', 'guests', 'payment'])->get();
+        $reservations = Reservation::with(['cabin', 'user', 'payment'])->get();
         return response()->json($reservations, 200);
     }
 
     // GET /reservations/{id}
     public function show($id)
     {
-        $reservation = Reservation::with(['cabin', 'user', 'guests', 'payment'])->findOrFail($id);
+        $reservation = Reservation::with(['cabin', 'user', 'payment'])->findOrFail($id);
         return response()->json($reservation, 200);
     }
 
@@ -40,9 +40,7 @@ class ReservationController extends Controller
                 'end_date' => 'required|date|after:start_date',
                 'email'  => 'required|email|max:255',
                 'phone'  => 'required|string|max:20',
-                'guests' => 'required|array|min:1',
-                'guests.*.full_name' => 'required|string|max:150',
-                'guests.*.guest_type' => 'required|in:adult,child',
+                'guest_number' => 'required|integer|min:1',
             ]);
 
             $user = $request->user();
@@ -71,7 +69,7 @@ class ReservationController extends Controller
 
                 $days = Carbon::parse($startDate)->diffInDays(Carbon::parse($endDate));
                 $total = $days * $cabin->price_per_night;
-                $guestCount = count($validated['guests']);
+                $guestCount = $validated['guest_number'];
 
                 if ($guestCount > $cabin->capacity) {
                     return false;
@@ -91,9 +89,7 @@ class ReservationController extends Controller
                     'status'     => 'pending',
                 ]);
 
-                $reservation->guests()->createMany($validated['guests']);
-
-                return $reservation->load(['cabin', 'user', 'guests']);
+                return $reservation->load(['cabin', 'user']);
             });
 
             if ($reservation === false) {
@@ -127,7 +123,7 @@ class ReservationController extends Controller
     // PUT /reservations/{id}
     public function update(Request $request, $id)
     {
-        $reservation = Reservation::with(['cabin', 'guests'])->findOrFail($id);
+        $reservation = Reservation::with('cabin')->findOrFail($id);
 
         $validated = $request->validate([
             'status' => 'required|in:pending,confirmed,active,cancelled'

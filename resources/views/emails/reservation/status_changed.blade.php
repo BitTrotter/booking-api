@@ -35,6 +35,8 @@ El estado de tu reservación ha cambiado a **{{ $reservation->status }}**.
 - {{ $guest->full_name }} — {{ $guest->guest_type === 'adult' ? 'Adulto' : 'Niño' }}
 @endforeach
 
+Total registrados: {{ $reservation->guest_count }}
+
 Gracias,<br>
 {{ config('app.name') }}
 </x-mail::message>

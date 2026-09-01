@@ -24,6 +24,8 @@ Hola, hemos recibido tu reservación. Aquí están los detalles:
 - {{ $guest->full_name }} — {{ $guest->guest_type === 'adult' ? 'Adulto' : 'Niño' }}
 @endforeach
 
+Total registrados: {{ $reservation->guest_count }}
+
 ---
 
 **Contacto registrado:**
