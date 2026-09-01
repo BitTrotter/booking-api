@@ -27,6 +27,7 @@ class PublicCheckoutFlowTest extends TestCase
             'cabin_id' => 1,
             'start_date' => now()->addDay()->toDateString(),
             'end_date' => now()->addDays(3)->toDateString(),
+            'full_name' => 'Test Guest',
             'email' => 'guest@example.com',
             'phone' => '5551234567',
             'guest_number' => 1,

@@ -15,6 +15,7 @@ class Reservation extends Model
         'start_date',
         'end_date',
         'guest_count',
+        'full_name',
         'email',
         'phone',
         'total_days',
