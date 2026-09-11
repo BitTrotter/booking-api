@@ -28,7 +28,7 @@ class PaymentController extends Controller
         $reservation = Reservation::with('cabin')->findOrFail($validated['reservation_id']);
 
         $user = $request->user();
-        if ($reservation->user_id !== $user->id && !$user->hasRole('Super User')) {
+        if ($reservation->user_id !== $user->id && !$user->hasRole('Super Admin')) {
             return response()->json(['message' => 'Forbidden'], 403);
         }
 
@@ -113,7 +113,7 @@ class PaymentController extends Controller
         $reservation = Reservation::findOrFail($reservationId);
 
         $user = $request->user();
-        if ($reservation->user_id !== $user->id && !$user->hasRole('Super User')) {
+        if ($reservation->user_id !== $user->id && !$user->hasRole('Super Admin')) {
             return response()->json(['message' => 'Forbidden'], 403);
         }
 

@@ -73,7 +73,11 @@ Route::middleware(['auth:api'])->group(function () {
     Route::patch('/reservations/{reservation}',  [ReservationController::class, 'update'])->middleware('permission:edit_reservation,api');
     Route::delete('/reservations/{reservation}', [ReservationController::class, 'destroy'])->middleware('permission:cancel_reservation,api');
 
-    Route::apiResource('features', FeatureController::class);
+    Route::get('/features', [FeatureController::class, 'index'])->middleware('permission:show_cabin_details,api');
+    Route::post('/features', [FeatureController::class, 'store'])->middleware('permission:edit_cabin,api');
+    Route::get('/features/{feature}', [FeatureController::class, 'show'])->middleware('permission:show_cabin_details,api');
+    Route::match(['put', 'patch'], '/features/{feature}', [FeatureController::class, 'update'])->middleware('permission:edit_cabin,api');
+    Route::delete('/features/{feature}', [FeatureController::class, 'destroy'])->middleware('permission:edit_cabin,api');
 
     Route::get('/users',           [UsersController::class, 'index'])->middleware('permission:list_staff,api');
     Route::post('/users',          [UsersController::class, 'store'])->middleware('permission:create_staff,api');
@@ -89,7 +93,7 @@ Route::middleware(['auth:api'])->group(function () {
     Route::delete('/cabins/{id}/images/{imageId}', [CabinImageController::class, 'destroy'])->middleware('permission:delete_cabin,api');
 
     // Payments
-    Route::get('/payments', [PaymentController::class, 'index']);
+    Route::get('/payments', [PaymentController::class, 'index'])->middleware('permission:list_payment,api');
     Route::post('/payments/intent', [PaymentController::class, 'createIntent']);
     Route::get('/payments/{reservation_id}', [PaymentController::class, 'show']);
 });

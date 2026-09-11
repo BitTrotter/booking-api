@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
+use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
 
@@ -30,6 +31,7 @@ class UsersController extends Controller
                     'email' => $user->email,
                     'created_at' => $user->created_at,
                     'roles' => $user->roles->pluck('name'),
+                    'direct_permissions' => $user->getDirectPermissions()->pluck('name'),
                     'permissions' => $user->getAllPermissions()->pluck('name'),
                 ];
             })
@@ -49,10 +51,12 @@ class UsersController extends Controller
             'last_name' => 'nullable|string|max:255',
             'status' => 'nullable|string|max:50',
             'roles' => 'nullable|array',
+            'permissions' => 'nullable|array',
         ]);
 
         $user = DB::transaction(function () use ($validated) {
             $roles = $this->resolveRoles($validated['roles'] ?? []);
+            $permissions = $this->resolvePermissions($validated['permissions'] ?? []);
 
             $user = User::create([
                 'name' => $validated['name'],
@@ -65,6 +69,10 @@ class UsersController extends Controller
 
             if (! empty($roles)) {
                 $user->syncRoles($roles);
+            }
+
+            if (! empty($permissions)) {
+                $user->syncPermissions($permissions);
             }
 
             return $user->load('roles');
@@ -80,6 +88,7 @@ class UsersController extends Controller
                 'last_name' => $user->last_name,
                 'status' => $user->status,
                 'roles' => $user->roles->pluck('name'),
+                'direct_permissions' => $user->getDirectPermissions()->pluck('name'),
                 'permissions' => $user->getAllPermissions()->pluck('name'),
             ],
         ], 201);
@@ -101,6 +110,8 @@ class UsersController extends Controller
                 'email' => $user->email,
                 'created_at' => $user->created_at,
                 'roles' => $user->roles()->pluck('name'),
+                'direct_permissions' => $user->getDirectPermissions()->pluck('name'),
+                'permissions' => $user->getAllPermissions()->pluck('name'),
             ]
         ], 200);
     }
@@ -123,11 +134,15 @@ class UsersController extends Controller
             'last_name' => 'nullable|string|max:255',
             'status' => 'nullable|string|max:50',
             'roles' => 'nullable|array',
+            'permissions' => 'nullable|array',
         ]);
 
         $user = DB::transaction(function () use ($user, $validated, $request) {
             $roles = $request->has('roles')
                 ? $this->resolveRoles($validated['roles'] ?? [])
+                : null;
+            $permissions = $request->has('permissions')
+                ? $this->resolvePermissions($validated['permissions'] ?? [])
                 : null;
 
             $user->fill([
@@ -148,6 +163,10 @@ class UsersController extends Controller
                 $user->syncRoles($roles ?? []);
             }
 
+            if ($request->has('permissions')) {
+                $user->syncPermissions($permissions ?? []);
+            }
+
             return $user->load('roles');
         });
 
@@ -161,6 +180,7 @@ class UsersController extends Controller
                 'last_name' => $user->last_name,
                 'status' => $user->status,
                 'roles' => $user->roles->pluck('name'),
+                'direct_permissions' => $user->getDirectPermissions()->pluck('name'),
                 'permissions' => $user->getAllPermissions()->pluck('name'),
             ],
         ], 200);
@@ -210,5 +230,44 @@ class UsersController extends Controller
         }
 
         return $resolvedRoles->all();
+    }
+
+    private function resolvePermissions(array $permissions): array
+    {
+        $permissions = collect($permissions)
+            ->filter(fn ($permission) => $permission !== null && $permission !== '')
+            ->values();
+
+        if ($permissions->isEmpty()) {
+            return [];
+        }
+
+        $resolvedPermissions = Permission::query()
+            ->where('guard_name', 'api')
+            ->where(function ($query) use ($permissions) {
+                $numericPermissions = $permissions
+                    ->filter(fn ($permission) => is_numeric($permission))
+                    ->map(fn ($permission) => (int) $permission)
+                    ->all();
+
+                $stringPermissions = $permissions
+                    ->map(fn ($permission) => (string) $permission)
+                    ->all();
+
+                if (! empty($numericPermissions)) {
+                    $query->orWhereIn('id', $numericPermissions);
+                }
+
+                $query->orWhereIn('name', $stringPermissions);
+            })
+            ->pluck('name');
+
+        if ($resolvedPermissions->count() !== $permissions->count()) {
+            throw ValidationException::withMessages([
+                'permissions' => ['One or more permissions are invalid for the api guard.'],
+            ]);
+        }
+
+        return $resolvedPermissions->all();
     }
 }
