@@ -20,6 +20,7 @@ return [
         'http://localhost:5173',
         'https://rockycabinsretreat.webflow.io',
         'https://www.rockycabinsretreat.com',
+        'https://www.panel.rockycabinsretreat.com',
     ],
 
 
