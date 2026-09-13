@@ -3,16 +3,16 @@
 namespace App\Http\Controllers\Payments;
 
 use App\Http\Controllers\Controller;
+use App\Mail\ReservationStatusChangedMail;
 use App\Models\Payment;
 use App\Models\Reservation;
+use App\Services\MailService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Stripe\Exception\SignatureVerificationException;
 use Stripe\PaymentIntent;
 use Stripe\Stripe;
 use Stripe\Webhook;
-use App\Mail\ReservationStatusChangedMail;
-use App\Services\MailService;
 
 class PaymentController extends Controller
 {
@@ -28,7 +28,7 @@ class PaymentController extends Controller
         $reservation = Reservation::with('cabin')->findOrFail($validated['reservation_id']);
 
         $user = $request->user();
-        if ($reservation->user_id !== $user->id && !$user->hasRole('Super Admin')) {
+        if ($reservation->user_id !== $user->id && ! $user->hasRole('Super Admin')) {
             return response()->json(['message' => 'Forbidden'], 403);
         }
 
@@ -43,11 +43,11 @@ class PaymentController extends Controller
 
         if ($existing) {
             return response()->json([
-                'client_secret'        => $existing->stripe_client_secret,
-                'payment_intent_id'    => $existing->stripe_payment_intent_id,
-                'amount'               => $existing->amount,
-                'currency'             => $existing->currency,
-                'reservation_id'       => $reservation->id,
+                'client_secret' => $existing->stripe_client_secret,
+                'payment_intent_id' => $existing->stripe_payment_intent_id,
+                'amount' => $existing->amount,
+                'currency' => $existing->currency,
+                'reservation_id' => $reservation->id,
             ]);
         }
 
@@ -55,39 +55,39 @@ class PaymentController extends Controller
             Stripe::setApiKey(config('services.stripe.secret'));
 
             $amountInCents = (int) round($reservation->total_price * 100);
-            $currency      = config('services.stripe.currency', 'mxn');
+            $currency = config('services.stripe.currency', 'mxn');
 
             $intent = PaymentIntent::create([
-                'amount'   => $amountInCents,
+                'amount' => $amountInCents,
                 'currency' => $currency,
                 'metadata' => [
                     'reservation_id' => $reservation->id,
-                    'cabin_id'       => $reservation->cabin_id,
-                    'user_id'        => $reservation->user_id,
+                    'cabin_id' => $reservation->cabin_id,
+                    'user_id' => $reservation->user_id,
                 ],
             ]);
 
             $payment = Payment::create([
-                'reservation_id'            => $reservation->id,
-                'stripe_payment_intent_id'  => $intent->id,
-                'stripe_client_secret'      => $intent->client_secret,
-                'amount'                    => $reservation->total_price,
-                'currency'                  => $currency,
-                'status'                    => 'pending',
+                'reservation_id' => $reservation->id,
+                'stripe_payment_intent_id' => $intent->id,
+                'stripe_client_secret' => $intent->client_secret,
+                'amount' => $reservation->total_price,
+                'currency' => $currency,
+                'status' => 'pending',
             ]);
 
             return response()->json([
-                'client_secret'     => $intent->client_secret,
+                'client_secret' => $intent->client_secret,
                 'payment_intent_id' => $payment->stripe_payment_intent_id,
-                'amount'            => $payment->amount,
-                'currency'          => $payment->currency,
-                'reservation_id'    => $reservation->id,
+                'amount' => $payment->amount,
+                'currency' => $payment->currency,
+                'reservation_id' => $reservation->id,
             ], 201);
         } catch (\Throwable $e) {
             Log::error('Stripe createIntent failed', [
-                'message'        => $e->getMessage(),
+                'message' => $e->getMessage(),
                 'reservation_id' => $reservation->id,
-                'user_id'        => $request->user()->id,
+                'user_id' => $request->user()->id,
             ]);
 
             $response = ['message' => 'Error creating payment intent'];
@@ -113,47 +113,49 @@ class PaymentController extends Controller
         $reservation = Reservation::findOrFail($reservationId);
 
         $user = $request->user();
-        if ($reservation->user_id !== $user->id && !$user->hasRole('Super Admin')) {
+        if ($reservation->user_id !== $user->id && ! $user->hasRole('Super Admin')) {
             return response()->json(['message' => 'Forbidden'], 403);
         }
 
         $payment = Payment::where('reservation_id', $reservationId)->latest()->first();
 
-        if (!$payment) {
+        if (! $payment) {
             return response()->json(['message' => 'No payment found for this reservation'], 404);
         }
 
         return response()->json([
-            'reservation_id'         => $reservation->id,
-            'payment_intent_id'      => $payment->stripe_payment_intent_id,
-            'amount'                 => $payment->amount,
-            'currency'               => $payment->currency,
-            'status'                 => $payment->status,
-            'paid_at'                => $payment->paid_at,
+            'reservation_id' => $reservation->id,
+            'payment_intent_id' => $payment->stripe_payment_intent_id,
+            'amount' => $payment->amount,
+            'currency' => $payment->currency,
+            'status' => $payment->status,
+            'paid_at' => $payment->paid_at,
         ]);
     }
 
     // POST /payments/webhook  (no auth middleware — called by Stripe)
     public function webhook(Request $request)
     {
-        $payload       = $request->getContent();
-        $sigHeader     = $request->header('Stripe-Signature');
+        $payload = $request->getContent();
+        $sigHeader = $request->header('Stripe-Signature');
         $webhookSecret = config('services.stripe.webhook_secret');
 
         try {
             $event = Webhook::constructEvent($payload, $sigHeader, $webhookSecret);
         } catch (SignatureVerificationException $e) {
             Log::warning('Stripe webhook: invalid signature', ['error' => $e->getMessage()]);
+
             return response()->json(['message' => 'Invalid signature'], 400);
         } catch (\UnexpectedValueException $e) {
             Log::warning('Stripe webhook: invalid payload', ['error' => $e->getMessage()]);
+
             return response()->json(['message' => 'Invalid payload'], 400);
         }
 
         match ($event->type) {
-            'payment_intent.succeeded'       => $this->handleSucceeded($event->data->object),
-            'payment_intent.payment_failed'  => $this->handleFailed($event->data->object),
-            default                          => null,
+            'payment_intent.succeeded' => $this->handleSucceeded($event->data->object),
+            'payment_intent.payment_failed' => $this->handleFailed($event->data->object),
+            default => null,
         };
 
         return response()->json(['received' => true]);
@@ -163,20 +165,33 @@ class PaymentController extends Controller
     {
         $payment = Payment::where('stripe_payment_intent_id', $intent->id)->first();
 
-        if (!$payment) {
+        if (! $payment) {
             Log::warning('Stripe webhook: payment not found for succeeded intent', ['intent_id' => $intent->id]);
+
             return;
         }
 
+        $reservation = $payment->reservation;
+
         $payment->update([
-            'status'  => 'paid',
+            'status' => 'paid',
             'paid_at' => now(),
         ]);
 
-        $payment->reservation()->update(['status' => 'confirmed']);
-        $this->mail->send($payment->reservation->email, new ReservationStatusChangedMail($payment->reservation, 'pending'));
+        // An expired reservation must never be reactivated by a delayed Stripe webhook.
+        if ($reservation->status === 'cancelled') {
+            Log::warning('Payment succeeded after reservation expiration', [
+                'payment_id' => $payment->id,
+                'reservation_id' => $payment->reservation_id,
+            ]);
+
+            return;
+        }
+
+        $reservation->update(['status' => 'confirmed']);
+        $this->mail->send($reservation->email, new ReservationStatusChangedMail($reservation, 'pending'));
         Log::info('Payment confirmed', [
-            'payment_id'     => $payment->id,
+            'payment_id' => $payment->id,
             'reservation_id' => $payment->reservation_id,
         ]);
     }
@@ -185,15 +200,16 @@ class PaymentController extends Controller
     {
         $payment = Payment::where('stripe_payment_intent_id', $intent->id)->first();
 
-        if (!$payment) {
+        if (! $payment) {
             Log::warning('Stripe webhook: payment not found for failed intent', ['intent_id' => $intent->id]);
+
             return;
         }
 
         $payment->update(['status' => 'failed']);
 
         Log::info('Payment failed', [
-            'payment_id'     => $payment->id,
+            'payment_id' => $payment->id,
             'reservation_id' => $payment->reservation_id,
         ]);
     }
