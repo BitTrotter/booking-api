@@ -17,15 +17,11 @@ class ReservationCreatedMail extends Mailable
 
     public function envelope(): Envelope
     {
-        return new Envelope(
-            subject: 'Reservación recibida #' . $this->reservation->id,
-        );
+        return new Envelope(subject: 'Booking received #' . $this->reservation->id);
     }
 
     public function content(): Content
     {
-        return new Content(
-            markdown: 'emails.reservation.created',
-        );
+        return new Content(view: 'emails.reservation.created');
     }
 }

@@ -1,42 +1,16 @@
-<x-mail::message>
-# Actualización de reservación
-
-@if ($reservation->status === 'confirmed')
-Tu reservación ha sido **confirmada**. ¡Te esperamos!
-@elseif ($reservation->status === 'active')
-¡Tu estadía **comienza hoy**! Recuerda llevar tu confirmación. ¡Bienvenido!
-@elseif ($reservation->status === 'cancelled')
-Tu reservación ha sido **cancelada**. Si tienes dudas, contáctanos.
-@elseif ($reservation->status === 'completed')
-Tu estadía ha **finalizado**. Esperamos que hayas tenido una excelente experiencia. ¡Hasta la próxima!
-@else
-El estado de tu reservación ha cambiado a **{{ $reservation->status }}**.
-@endif
-
----
-
-**Reservación #{{ $reservation->id }}**
-
-| | |
-|---|---|
-| Cabaña | {{ $reservation->cabin->name }} |
-| Entrada | {{ $reservation->start_date->format('d/m/Y') }} |
-| Salida | {{ $reservation->end_date->format('d/m/Y') }} |
-| Noches | {{ $reservation->total_days }} |
-| Total | ${{ number_format($reservation->total_price, 2) }} MXN |
-| Estado anterior | {{ ucfirst($previousStatus) }} |
-| Estado actual | {{ ucfirst($reservation->status) }} |
-
----
-
-**Huéspedes:**
-
-@foreach ($reservation->guests as $guest)
-- {{ $guest->full_name }} — {{ $guest->guest_type === 'adult' ? 'Adulto' : 'Niño' }}
-@endforeach
-
-Total registrados: {{ $reservation->guest_count }}
-
-Gracias,<br>
-{{ config('app.name') }}
-</x-mail::message>
+@php
+    $messages = [
+        'confirmed' => ['Your booking is confirmed.', 'Pack your bags — we look forward to welcoming you into nature.'],
+        'active' => ['Your stay begins today!', 'Your cabin is ready for you. Welcome!'],
+        'cancelled' => ['Your booking was cancelled.', 'If you need help or would like to make a new booking, reply to this email.'],
+        'completed' => ['Thank you for staying with us.', 'We hope your stay was filled with memorable moments.'],
+        'pending' => ['Your booking is under review.', 'We are reviewing your booking information and will contact you shortly.'],
+    ];
+    [$headline, $description] = $messages[$reservation->status] ?? ['Your booking was updated.', 'Your booking status has changed.'];
+@endphp
+<x-emails.layout title="Booking update">
+    <p class="eyebrow">Booking #{{ $reservation->id }}</p>
+    <h1>{{ $headline }}</h1>
+    <p class="lead">{{ $description }}</p>
+    <x-emails.reservation-details :reservation="$reservation" :previous-status="$previousStatus" />
+</x-emails.layout>

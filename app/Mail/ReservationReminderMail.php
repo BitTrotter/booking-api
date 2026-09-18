@@ -17,15 +17,11 @@ class ReservationReminderMail extends Mailable
 
     public function envelope(): Envelope
     {
-        return new Envelope(
-            subject: 'Recordatorio: tu estadía es mañana — Reservación #' . $this->reservation->id,
-        );
+        return new Envelope(subject: 'Reminder: your stay is tomorrow — Booking #' . $this->reservation->id);
     }
 
     public function content(): Content
     {
-        return new Content(
-            markdown: 'emails.reservation.reminder',
-        );
+        return new Content(view: 'emails.reservation.reminder');
     }
 }
