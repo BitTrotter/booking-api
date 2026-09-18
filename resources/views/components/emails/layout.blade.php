@@ -16,13 +16,13 @@
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:#eee3d1;"><tr><td align="center" style="padding:32px 16px;">
         <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:620px; background:#fffdf9;">
             <tr><td class="email-header" style="background:#1e3133; padding:30px 42px 28px; text-align:center;">
-                <div style="font-family:Georgia, 'Times New Roman', serif; color:#f4eadb; font-size:30px; line-height:1; letter-spacing:3px;">△ △ △</div>
+                <div style="font-family:Georgia, 'Times New Roman', serif; color:#f4eadb; font-size:30px; line-height:1; letter-spacing:3px;">🌲🌲🌲</div>
                 <div style="font-family:Georgia, 'Times New Roman', serif; color:#fff9ee; font-size:20px; font-weight:bold; letter-spacing:2px; margin-top:10px;">WILD &amp; WONDER</div>
                 <div style="color:#d9c4a5; font-size:10px; letter-spacing:2px; margin-top:8px; text-transform:uppercase;">Cabins in the heart of nature</div>
             </td></tr>
             <tr><td class="email-content" style="padding:42px 42px 30px;">{{ $slot }}</td></tr>
             <tr><td class="email-footer" style="background:#1e3133; padding:24px 42px; text-align:center;">
-                <div style="color:#f4eadb; font-size:13px;">{{ config('app.name') }}</div>
+                <div style="color:#f4eadb; font-size:13px;"><a href="https://www.rockycabinsretreat.com" style="color:#f4eadb; text-decoration:underline;">www.rockycabinsretreat.com</a></div>
                 <div style="color:#c9b79e; font-size:11px; margin-top:8px;">Where wild meets wonder.</div>
             </td></tr>
         </table>
