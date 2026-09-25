@@ -17,7 +17,7 @@ class PublicPaymentController extends Controller
     // GET /api/public/payments/{reservation}/status?confirmation_token=...
     public function status(Request $request, string $reservation): JsonResponse
     {
-        $reservation = Reservation::where('public_id', $reservation)->firstOrFail();
+        $reservation = Reservation::where('public_code', strtoupper($reservation))->firstOrFail();
         $validated = $request->validate([
             'confirmation_token' => 'required|string',
         ]);
@@ -37,7 +37,7 @@ class PublicPaymentController extends Controller
         }
 
         return response()->json([
-            'reservation_id' => $reservation->public_id,
+            'reservation_id' => $reservation->public_code,
             'payment_status' => $payment->status,
             'paid_at' => $payment->paid_at,
         ]);
@@ -47,10 +47,10 @@ class PublicPaymentController extends Controller
     public function createIntent(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'reservation_id' => 'required|string|exists:reservations,public_id',
+            'reservation_id' => 'required|string|exists:reservations,public_code',
         ]);
 
-        $reservation = Reservation::with('cabin')->where('public_id', $validated['reservation_id'])->firstOrFail();
+        $reservation = Reservation::with('cabin')->where('public_code', strtoupper($validated['reservation_id']))->firstOrFail();
 
         if (!$reservation) {
             return response()->json(['message' => 'Reservation not found'], 404);
@@ -76,7 +76,7 @@ class PublicPaymentController extends Controller
                 'payment_intent_id' => $existing->stripe_payment_intent_id,
                 'amount'            => $existing->amount,
                 'currency'          => $existing->currency,
-                'reservation_id'    => $reservation->public_id,
+                'reservation_id'    => $reservation->public_code,
             ]);
         }
 
@@ -109,7 +109,7 @@ class PublicPaymentController extends Controller
                 'payment_intent_id' => $payment->stripe_payment_intent_id,
                 'amount'            => $payment->amount,
                 'currency'          => $payment->currency,
-                'reservation_id'    => $reservation->public_id,
+                'reservation_id'    => $reservation->public_code,
             ], 201);
         } catch (\Throwable $e) {
             Log::error('Public Stripe createIntent failed', [

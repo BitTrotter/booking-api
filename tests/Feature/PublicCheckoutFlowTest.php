@@ -73,7 +73,7 @@ class PublicCheckoutFlowTest extends TestCase
             'confirmation_token' => bcrypt('confirmation-token'),
         ]);
 
-        $url = '/api/public/reservations/' . $reservation->public_id . '/confirmation?token=confirmation-token';
+        $url = '/api/public/reservations/' . $reservation->public_code . '/confirmation?token=confirmation-token';
 
         $this->getJson($url)
             ->assertStatus(202)
@@ -83,9 +83,9 @@ class PublicCheckoutFlowTest extends TestCase
 
         $this->getJson($url)
             ->assertStatus(200)
-            ->assertJsonPath('data.id', $reservation->public_id);
+            ->assertJsonPath('data.id', $reservation->public_code);
 
-        $this->getJson('/api/public/reservations/' . $reservation->public_id . '/confirmation?token=invalid')
+        $this->getJson('/api/public/reservations/' . $reservation->public_code . '/confirmation?token=invalid')
             ->assertStatus(404);
     }
 }

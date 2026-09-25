@@ -13,7 +13,24 @@ class Reservation extends Model
     {
         static::creating(function (Reservation $reservation) {
             $reservation->public_id ??= (string) Str::uuid();
+            $reservation->public_code ??= self::generatePublicCode();
         });
+    }
+
+    public static function generatePublicCode(): string
+    {
+        $alphabet = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+        $parts = [];
+
+        for ($group = 0; $group < 3; $group++) {
+            $part = '';
+            for ($i = 0; $i < 4; $i++) {
+                $part .= $alphabet[random_int(0, strlen($alphabet) - 1)];
+            }
+            $parts[] = $part;
+        }
+
+        return 'RSV-' . implode('-', $parts);
     }
 
     protected $fillable = [
