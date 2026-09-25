@@ -20,17 +20,12 @@ class Reservation extends Model
     public static function generatePublicCode(): string
     {
         $alphabet = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
-        $parts = [];
-
-        for ($group = 0; $group < 3; $group++) {
-            $part = '';
-            for ($i = 0; $i < 4; $i++) {
-                $part .= $alphabet[random_int(0, strlen($alphabet) - 1)];
-            }
-            $parts[] = $part;
+        $code = '';
+        for ($i = 0; $i < 6; $i++) {
+            $code .= $alphabet[random_int(0, strlen($alphabet) - 1)];
         }
 
-        return 'RSV-' . implode('-', $parts);
+        return $code;
     }
 
     protected $fillable = [

@@ -48,6 +48,7 @@ class PublicPaymentController extends Controller
     {
         $validated = $request->validate([
             'reservation_id' => 'required|string|exists:reservations,public_code',
+            'confirmation_token' => 'required|string',
         ]);
 
         $reservation = Reservation::with('cabin')->where('public_code', strtoupper($validated['reservation_id']))->firstOrFail();
@@ -59,6 +60,13 @@ class PublicPaymentController extends Controller
         // Only public (guest) reservations can use this endpoint
         if ($reservation->user_id !== null) {
             return response()->json(['message' => 'Forbidden'], 403);
+        }
+
+        if (
+            empty($reservation->confirmation_token)
+            || !Hash::check($validated['confirmation_token'], $reservation->confirmation_token)
+        ) {
+            return response()->json(['message' => 'Reservation not found'], 404);
         }
 
         if ($reservation->status !== 'pending') {

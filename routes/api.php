@@ -23,9 +23,9 @@ Route::prefix('public')->middleware('throttle:60,1')->group(function () {
     Route::get('/cabins/{id}',               [PublicCabinController::class, 'show']);
     Route::get('/reservations/availability', [ReservationController::class, 'checkAvailability']);
     Route::post('/reservations',             [PublicReservationController::class, 'store']);
-    Route::get('/reservations/{reservation}/confirmation', [PublicReservationController::class, 'confirmation'])->where('reservation', '[2-9A-Za-z-]{16,24}');
+    Route::get('/reservations/{reservation}/confirmation', [PublicReservationController::class, 'confirmation'])->where('reservation', '[2-9A-HJ-NP-Z]{6}');
     Route::post('/payments/intent',          [PublicPaymentController::class, 'createIntent']);
-    Route::get('/payments/{reservation}/status', [PublicPaymentController::class, 'status'])->where('reservation', '[2-9A-Za-z-]{16,24}');
+    Route::get('/payments/{reservation}/status', [PublicPaymentController::class, 'status'])->where('reservation', '[2-9A-HJ-NP-Z]{6}');
 });
 
 // Stripe webhook — sin auth, Stripe verifica con firma HMAC
