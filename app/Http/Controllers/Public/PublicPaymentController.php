@@ -8,11 +8,40 @@ use App\Models\Reservation;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Hash;
 use Stripe\PaymentIntent;
 use Stripe\Stripe;
 
 class PublicPaymentController extends Controller
 {
+    // GET /api/public/payments/{reservation}/status?confirmation_token=...
+    public function status(Request $request, Reservation $reservation): JsonResponse
+    {
+        $validated = $request->validate([
+            'confirmation_token' => 'required|string',
+        ]);
+
+        if (
+            $reservation->user_id !== null
+            || empty($reservation->confirmation_token)
+            || !Hash::check($validated['confirmation_token'], $reservation->confirmation_token)
+        ) {
+            return response()->json(['message' => 'Reservation not found'], 404);
+        }
+
+        $payment = Payment::where('reservation_id', $reservation->id)->latest()->first();
+
+        if (!$payment) {
+            return response()->json(['message' => 'No payment found for this reservation'], 404);
+        }
+
+        return response()->json([
+            'reservation_id' => $reservation->id,
+            'payment_status' => $payment->status,
+            'paid_at' => $payment->paid_at,
+        ]);
+    }
+
     // POST /api/public/payments/intent
     public function createIntent(Request $request): JsonResponse
     {

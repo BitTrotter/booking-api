@@ -25,6 +25,7 @@ Route::prefix('public')->middleware('throttle:60,1')->group(function () {
     Route::post('/reservations',             [PublicReservationController::class, 'store']);
     Route::get('/reservations/{reservation}/confirmation', [PublicReservationController::class, 'confirmation']);
     Route::post('/payments/intent',          [PublicPaymentController::class, 'createIntent']);
+    Route::get('/payments/{reservation}/status', [PublicPaymentController::class, 'status']);
 });
 
 // Stripe webhook — sin auth, Stripe verifica con firma HMAC
