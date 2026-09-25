@@ -1,7 +1,7 @@
 @props(['reservation', 'previousStatus' => null])
 
 @php
-    $statusLabels = ['pending' => 'Under review', 'confirmed' => 'Confirmed', 'active' => 'Active', 'cancelled' => 'Cancelled', 'completed' => 'Completed'];
+    $statusLabels = ['pending' => 'Pending', 'confirmed' => 'Confirmed', 'active' => 'Active', 'cancelled' => 'Cancelled', 'completed' => 'Completed'];
     $status = $statusLabels[$reservation->status] ?? ucfirst($reservation->status);
 @endphp
 
