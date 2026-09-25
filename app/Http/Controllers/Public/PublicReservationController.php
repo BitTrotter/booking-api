@@ -97,7 +97,7 @@ class PublicReservationController extends Controller
             return response()->json([
                 'message' => 'Reservation created successfully',
                 'data'    => [
-                    'reservation_id'  => $reservation->id,
+                    'reservation_id'  => $reservation->public_id,
                     'total_price'     => $reservation->total_price,
                     'status'          => $reservation->status,
                     // Store this only on the client that created the reservation.
@@ -121,8 +121,9 @@ class PublicReservationController extends Controller
     }
 
     // GET /api/public/reservations/{reservation}/confirmation?token={confirmation_token}
-    public function confirmation(Request $request, Reservation $reservation): JsonResponse
+    public function confirmation(Request $request, string $reservation): JsonResponse
     {
+        $reservation = Reservation::where('public_id', $reservation)->firstOrFail();
         $validated = $request->validate([
             'token' => 'required|string',
         ]);
@@ -147,8 +148,8 @@ class PublicReservationController extends Controller
         return response()->json([
             'message' => 'Reservation confirmed successfully',
             'data' => [
-                'id' => $reservation->id,
-                'reservation_id' => $reservation->id,
+                'id' => $reservation->public_id,
+                'reservation_id' => $reservation->public_id,
                 'cabin' => $reservation->cabin->name ?? null,
                 'start_date' => $reservation->start_date,
                 'end_date' => $reservation->end_date,

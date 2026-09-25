@@ -38,7 +38,9 @@ class PublicCheckoutFlowTest extends TestCase
         ]);
 
         $response->assertStatus(201)
-            ->assertJsonPath('data.reservation_id', 1);
+            ->assertJsonStructure(['data' => ['reservation_id', 'total_price', 'status', 'confirmation_token']]);
+
+        $this->assertNotSame('1', (string) $response->json('data.reservation_id'));
 
         $this->assertDatabaseHas('reservations', [
             'id' => 1,
@@ -71,7 +73,7 @@ class PublicCheckoutFlowTest extends TestCase
             'confirmation_token' => bcrypt('confirmation-token'),
         ]);
 
-        $url = '/api/public/reservations/' . $reservation->id . '/confirmation?token=confirmation-token';
+        $url = '/api/public/reservations/' . $reservation->public_id . '/confirmation?token=confirmation-token';
 
         $this->getJson($url)
             ->assertStatus(202)
@@ -81,9 +83,9 @@ class PublicCheckoutFlowTest extends TestCase
 
         $this->getJson($url)
             ->assertStatus(200)
-            ->assertJsonPath('data.id', $reservation->id);
+            ->assertJsonPath('data.id', $reservation->public_id);
 
-        $this->getJson('/api/public/reservations/' . $reservation->id . '/confirmation?token=invalid')
+        $this->getJson('/api/public/reservations/' . $reservation->public_id . '/confirmation?token=invalid')
             ->assertStatus(404);
     }
 }
