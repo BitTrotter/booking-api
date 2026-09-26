@@ -135,6 +135,10 @@ class ReservationController extends Controller
     {
         $reservation = Reservation::with('cabin')->findOrFail($id);
 
+        if ($reservation->status === 'cancelled') {
+            return response()->json(['message' => 'Cancelled reservations cannot be edited'], 422);
+        }
+
         $validated = $request->validate([
             'status' => 'sometimes|required|in:pending,confirmed,active,cancelled',
             'payment_method' => 'sometimes|nullable|in:stripe,cash,bank_transfer,terminal,courtesy',
@@ -157,7 +161,7 @@ class ReservationController extends Controller
     public function destroy($id)
     {
         $reservation = Reservation::findOrFail($id);
-        $reservation->delete();
+        $reservation->update(['status' => 'cancelled']);
 
         return response()->json(['message' => 'Reservation cancelled'], 200);
     }

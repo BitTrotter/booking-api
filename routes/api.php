@@ -72,7 +72,6 @@ Route::middleware(['auth:api'])->group(function () {
     Route::get('/reservations/{reservation}',    [ReservationController::class, 'show'])->middleware('permission:show_reservation_details,api');
     Route::put('/reservations/{reservation}',    [ReservationController::class, 'update'])->middleware('permission:edit_reservation,api');
     Route::patch('/reservations/{reservation}',  [ReservationController::class, 'update'])->middleware('permission:edit_reservation,api');
-    Route::delete('/reservations/{reservation}', [ReservationController::class, 'destroy'])->middleware('permission:cancel_reservation,api');
 
     Route::get('/features', [FeatureController::class, 'index'])->middleware('permission:show_cabin_details,api');
     Route::post('/features', [FeatureController::class, 'store'])->middleware('permission:edit_cabin,api');
