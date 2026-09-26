@@ -42,6 +42,10 @@ class Reservation extends Model
         'total_price',
         'status',
         'confirmation_token',
+        'payment_method',
+        'payment_reference',
+        'notes',
+        'amount_paid',
     ];
 
     protected $hidden = [
@@ -51,6 +55,7 @@ class Reservation extends Model
     protected $casts = [
         'start_date' => 'date',
         'end_date'   => 'date',
+        'amount_paid' => 'decimal:2',
     ];
 
     public function cabin()

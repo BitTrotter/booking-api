@@ -42,6 +42,10 @@ class ReservationController extends Controller
                 'email'  => 'required|email|max:255',
                 'phone'  => 'required|string|max:20',
                 'guest_number' => 'required|integer|min:1',
+                'payment_method' => 'nullable|in:stripe,cash,bank_transfer,terminal,courtesy',
+                'payment_reference' => 'nullable|string|max:255',
+                'notes' => 'nullable|string',
+                'amount_paid' => 'nullable|numeric|min:0',
             ]);
 
             $user = $request->user();
@@ -88,7 +92,11 @@ class ReservationController extends Controller
                     'phone'      => $validated['phone'],
                     'total_days' => $days,
                     'total_price' => $total,
-                    'status'     => 'pending',
+                    'status'     => 'confirmed',
+                    'payment_method' => $validated['payment_method'] ?? null,
+                    'payment_reference' => $validated['payment_reference'] ?? null,
+                    'notes' => $validated['notes'] ?? null,
+                    'amount_paid' => $validated['amount_paid'] ?? null,
                 ]);
 
                 return $reservation->load(['cabin', 'user']);
@@ -128,7 +136,11 @@ class ReservationController extends Controller
         $reservation = Reservation::with('cabin')->findOrFail($id);
 
         $validated = $request->validate([
-            'status' => 'required|in:pending,confirmed,active,cancelled'
+            'status' => 'sometimes|required|in:pending,confirmed,active,cancelled',
+            'payment_method' => 'sometimes|nullable|in:stripe,cash,bank_transfer,terminal,courtesy',
+            'payment_reference' => 'sometimes|nullable|string|max:255',
+            'notes' => 'sometimes|nullable|string',
+            'amount_paid' => 'sometimes|nullable|numeric|min:0',
         ]);
 
         $previousStatus = $reservation->status;
