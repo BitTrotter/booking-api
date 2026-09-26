@@ -7,6 +7,7 @@ use App\Mail\ReservationCreatedMail;
 use App\Models\Cabin;
 use App\Models\Reservation;
 use App\Services\MailService;
+use App\Services\PriceCalculatorService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -20,7 +21,7 @@ class PublicReservationController extends Controller
     public function __construct(private MailService $mail) {}
 
     // POST /api/public/reservations
-    public function store(Request $request): JsonResponse
+    public function store(Request $request, PriceCalculatorService $priceCalculator): JsonResponse
     {
         try {
             $validated = $request->validate([
@@ -35,7 +36,7 @@ class PublicReservationController extends Controller
 
             $confirmationToken = Str::random(64);
 
-            $reservation = DB::transaction(function () use ($validated, $confirmationToken) {
+            $reservation = DB::transaction(function () use ($validated, $confirmationToken, $priceCalculator) {
                 $startDate = Carbon::parse($validated['start_date'])->toDateString();
                 $endDate   = Carbon::parse($validated['end_date'])->toDateString();
 
@@ -63,7 +64,12 @@ class PublicReservationController extends Controller
                 }
 
                 $days  = Carbon::parse($startDate)->diffInDays(Carbon::parse($endDate));
-                $total = $days * $cabin->price_per_night;
+                $price = $priceCalculator->calculate(
+                    $cabin,
+                    Carbon::parse($startDate),
+                    Carbon::parse($endDate)
+                );
+                $total = $price['total'];
 
                 $reservation = Reservation::create([
                     'user_id'     => null,
@@ -78,6 +84,7 @@ class PublicReservationController extends Controller
                     'total_days'  => $days,
                     'total_price' => $total,
                     'status'      => 'pending',
+                    'payment_method' => 'stripe',
                     'confirmation_token' => Hash::make($confirmationToken),
                 ]);
 

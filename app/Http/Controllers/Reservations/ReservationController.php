@@ -8,6 +8,7 @@ use App\Mail\ReservationStatusChangedMail;
 use App\Models\Cabin;
 use App\Models\Reservation;
 use App\Services\MailService;
+use App\Services\PriceCalculatorService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -31,7 +32,7 @@ class ReservationController extends Controller
     }
 
     // POST /reservations
-    public function store(Request $request)
+    public function store(Request $request, PriceCalculatorService $priceCalculator)
     {
         try {
             $validated = $request->validate([
@@ -53,7 +54,7 @@ class ReservationController extends Controller
                 return response()->json(['message' => 'Unauthenticated'], 401);
             }
 
-            $reservation = DB::transaction(function () use ($validated, $user) {
+            $reservation = DB::transaction(function () use ($validated, $user, $priceCalculator) {
                 $startDate = Carbon::parse($validated['start_date'])->toDateString();
                 $endDate = Carbon::parse($validated['end_date'])->toDateString();
 
@@ -73,7 +74,12 @@ class ReservationController extends Controller
                 }
 
                 $days = Carbon::parse($startDate)->diffInDays(Carbon::parse($endDate));
-                $total = $days * $cabin->price_per_night;
+                $price = $priceCalculator->calculate(
+                    $cabin,
+                    Carbon::parse($startDate),
+                    Carbon::parse($endDate)
+                );
+                $total = $price['total'];
                 $guestCount = $validated['guest_number'];
 
                 if ($guestCount > $cabin->capacity) {
@@ -167,7 +173,7 @@ class ReservationController extends Controller
     }
 
     // GET /reservations/availability?cabin_id={id}&start_date={date}&end_date={date}
-    public function checkAvailability(Request $request)
+    public function checkAvailability(Request $request, PriceCalculatorService $priceCalculator)
     {
         $validated = $request->validate([
             'cabin_id'   => 'required|exists:cabins,id',
@@ -189,7 +195,11 @@ class ReservationController extends Controller
             ->exists();
 
         $days  = Carbon::parse($startDate)->diffInDays(Carbon::parse($endDate));
-        $total = $days * $cabin->price_per_night;
+        $price = $priceCalculator->calculate(
+            $cabin,
+            Carbon::parse($startDate),
+            Carbon::parse($endDate)
+        );
 
         return response()->json([
             'available'   => !$isBooked,
@@ -197,7 +207,7 @@ class ReservationController extends Controller
             'start_date'  => $startDate,
             'end_date'    => $endDate,
             'total_days'  => $days,
-            'total_price' => $total,
+            'total_price' => $price['total'],
         ]);
     }
 }

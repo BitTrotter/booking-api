@@ -20,7 +20,7 @@ class CabinController extends Controller
     // GET /cabins/{id}
     public function show($id)
     {
-        $cabin = Cabin::with(['features', 'images'])->findOrFail($id);
+        $cabin = Cabin::with(['features', 'images', 'priceRules'])->findOrFail($id);
         $mainImage = $cabin->images->firstWhere('is_main', true) ?? $cabin->images->first();
 
         $response = $cabin->toArray();

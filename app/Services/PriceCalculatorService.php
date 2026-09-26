@@ -69,7 +69,7 @@ class PriceCalculatorService
     Carbon $checkIn,
     Carbon $checkOut
 ): bool {
-    $days = collect($rule->days ?? [])
+    $days = collect($rule->days ?: ['Friday', 'Saturday', 'Sunday'])
         ->map(fn ($d) => strtolower($d));
 
     $current = $checkIn->copy();

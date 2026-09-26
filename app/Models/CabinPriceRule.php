@@ -14,4 +14,11 @@ class CabinPriceRule extends Model
         'status',
         'type'
     ];
+
+    protected $casts = [
+        'days' => 'array',
+        'start_date' => 'date',
+        'end_date' => 'date',
+        'active' => 'boolean',
+    ];
 }
