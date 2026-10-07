@@ -6,6 +6,20 @@ use Illuminate\Database\Eloquent\Model;
 
 class Cabin extends Model
 {
+    public const WEEKDAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+
+    protected static function booted(): void
+    {
+        static::saving(function (Cabin $cabin) {
+            if ($cabin->isDirty('weekly_prices') && $cabin->weekly_prices) {
+                $cabin->weekly_prices = array_map(fn ($price) => (float) $price, $cabin->weekly_prices);
+                $cabin->price_per_night = min($cabin->weekly_prices);
+            } elseif ($cabin->isDirty('price_per_night') || !$cabin->weekly_prices) {
+                $cabin->weekly_prices = array_fill_keys(self::WEEKDAYS, (float) $cabin->price_per_night);
+            }
+        });
+    }
+
     protected $fillable = [
         'name',
         'description_title',
@@ -13,6 +27,7 @@ class Cabin extends Model
         'check_in',
         'check_out',
         'price_per_night',
+        'weekly_prices',
         'capacity',
         'beds',
         'bathrooms',
@@ -24,6 +39,7 @@ class Cabin extends Model
 
     protected $casts = [
         'services' => 'array',
+        'weekly_prices' => 'array',
     ];
 
     public function features()
@@ -39,9 +55,5 @@ class Cabin extends Model
     public function reservations()
     {
         return $this->hasMany(Reservation::class);
-    }
-       public function priceRules()
-    {
-        return $this->hasMany(CabinPriceRule::class);
     }
 }

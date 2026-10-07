@@ -20,7 +20,7 @@ class CabinController extends Controller
     // GET /cabins/{id}
     public function show($id)
     {
-        $cabin = Cabin::with(['features', 'images', 'priceRules'])->findOrFail($id);
+        $cabin = Cabin::with(['features', 'images'])->findOrFail($id);
         $mainImage = $cabin->images->firstWhere('is_main', true) ?? $cabin->images->first();
 
         $response = $cabin->toArray();
@@ -36,7 +36,8 @@ class CabinController extends Controller
         $validated = $request->validate([
             'name'            => 'required|string',
             'description'     => 'nullable|string',
-            'price_per_night' => 'required|numeric',
+            'price_per_night' => 'required_without:weekly_prices|numeric|min:0|max:999999.99|decimal:0,2',
+            ...$this->weeklyPriceRules(),
             'capacity'        => 'required|integer',
             'beds'            => 'required|integer',
             'bathrooms'       => 'required|integer',
@@ -64,7 +65,8 @@ class CabinController extends Controller
         $validated = $request->validate([
             'name'            => 'sometimes|string',
             'description'     => 'sometimes|string',
-            'price_per_night' => 'sometimes|numeric',
+            'price_per_night' => 'sometimes|numeric|min:0|max:999999.99|decimal:0,2',
+            ...$this->weeklyPriceRules(),
             'capacity'        => 'sometimes|integer',
             'beds'            => 'sometimes|integer',
             'bathrooms'       => 'sometimes|integer',
@@ -77,9 +79,26 @@ class CabinController extends Controller
             'lng' => 'sometimes|numeric|between:-180,180',
         ]);
 
+        if (isset($validated['weekly_prices'])) {
+            $validated['price_per_night'] = min($validated['weekly_prices']);
+        } elseif (isset($validated['price_per_night'])) {
+            $validated['weekly_prices'] = array_fill_keys(Cabin::WEEKDAYS, (float) $validated['price_per_night']);
+        }
+
         $cabin->update($validated);
 
         return response()->json($cabin, 200);
+    }
+
+    private function weeklyPriceRules(): array
+    {
+        $rules = ['weekly_prices' => 'sometimes|required|array:'.implode(',', Cabin::WEEKDAYS)];
+
+        foreach (Cabin::WEEKDAYS as $day) {
+            $rules["weekly_prices.$day"] = 'required_with:weekly_prices|numeric|min:0|max:999999.99|decimal:0,2';
+        }
+
+        return $rules;
     }
 
     // DELETE /cabins/{id}

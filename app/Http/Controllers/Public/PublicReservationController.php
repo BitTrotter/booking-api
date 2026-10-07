@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class PublicReservationController extends Controller
 {
@@ -26,8 +27,8 @@ class PublicReservationController extends Controller
         try {
             $validated = $request->validate([
                 'cabin_id'               => 'required|exists:cabins,id',
-                'start_date'             => 'required|date|after_or_equal:today',
-                'end_date'               => 'required|date|after:start_date',
+                'start_date'             => 'required|date_format:Y-m-d|after_or_equal:today',
+                'end_date'               => 'required|date_format:Y-m-d|after:start_date',
                 'full_name'              => 'required|string|max:150',
                 'email'                  => 'required|email|max:255',
                 'phone'                  => 'required|string|max:20',
@@ -63,7 +64,6 @@ class PublicReservationController extends Controller
                     return false;
                 }
 
-                $days  = Carbon::parse($startDate)->diffInDays(Carbon::parse($endDate));
                 $price = $priceCalculator->calculate(
                     $cabin,
                     Carbon::parse($startDate),
@@ -81,8 +81,9 @@ class PublicReservationController extends Controller
                     'full_name'   => $validated['full_name'],
                     'email'       => $validated['email'],
                     'phone'       => $validated['phone'],
-                    'total_days'  => $days,
+                    'total_days'  => $price['nights'],
                     'total_price' => $total,
+                    'nightly_prices' => $price['nightly_prices'],
                     'status'      => 'pending',
                     'payment_method' => 'stripe',
                     'confirmation_token' => Hash::make($confirmationToken),
@@ -106,12 +107,15 @@ class PublicReservationController extends Controller
                 'data'    => [
                     'reservation_id'  => $reservation->public_code,
                     'total_price'     => $reservation->total_price,
+                    'nightly_prices'  => $reservation->nightly_prices,
                     'status'          => $reservation->status,
                     // Store this only on the client that created the reservation.
                     // It authorizes the public confirmation lookup after payment.
                     'confirmation_token' => $confirmationToken,
                 ],
             ], 201);
+        } catch (ValidationException $e) {
+            throw $e;
         } catch (\Throwable $e) {
             Log::error('Public reservation store failed', [
                 'message' => $e->getMessage(),
@@ -152,6 +156,11 @@ class PublicReservationController extends Controller
 
         $reservation->load('cabin');
 
+        $prices = array_unique(array_column($reservation->nightly_prices ?? [], 'price'));
+        $averagePrice = $reservation->total_days > 0
+            ? round((float) $reservation->total_price / $reservation->total_days, 2)
+            : null;
+
         return response()->json([
             'message' => 'Reservation confirmed successfully',
             'data' => [
@@ -163,7 +172,11 @@ class PublicReservationController extends Controller
                 'total_days' => $reservation->total_days,
                 'guest_count' => $reservation->guest_count,
                 'full_name' => $reservation->full_name,
-                'price_per_night' => $reservation->cabin->price_per_night ?? null,
+                'price_per_night' => $reservation->nightly_prices === null
+                    ? $averagePrice
+                    : (count($prices) === 1 ? reset($prices) : null),
+                'average_price_per_night' => $averagePrice,
+                'nightly_prices' => $reservation->nightly_prices,
                 'total_price' => $reservation->total_price,
                 'status' => $reservation->status,
                 'email' => $reservation->email,

@@ -13,6 +13,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 
 class ReservationController extends Controller
 {
@@ -37,8 +38,8 @@ class ReservationController extends Controller
         try {
             $validated = $request->validate([
                 'cabin_id' => 'required|exists:cabins,id',
-                'start_date' => 'required|date|after_or_equal:today',
-                'end_date' => 'required|date|after:start_date',
+                'start_date' => 'required|date_format:Y-m-d|after_or_equal:today',
+                'end_date' => 'required|date_format:Y-m-d|after:start_date',
                 'full_name' => 'required|string|max:150',
                 'email'  => 'required|email|max:255',
                 'phone'  => 'required|string|max:20',
@@ -73,7 +74,6 @@ class ReservationController extends Controller
                     return null;
                 }
 
-                $days = Carbon::parse($startDate)->diffInDays(Carbon::parse($endDate));
                 $price = $priceCalculator->calculate(
                     $cabin,
                     Carbon::parse($startDate),
@@ -96,8 +96,9 @@ class ReservationController extends Controller
                     'full_name'   => $validated['full_name'],
                     'email'      => $validated['email'],
                     'phone'      => $validated['phone'],
-                    'total_days' => $days,
+                    'total_days' => $price['nights'],
                     'total_price' => $total,
+                    'nightly_prices' => $price['nightly_prices'],
                     'status'     => 'confirmed',
                     'payment_method' => $validated['payment_method'] ?? null,
                     'payment_reference' => $validated['payment_reference'] ?? null,
@@ -119,6 +120,8 @@ class ReservationController extends Controller
             $this->mail->send($reservation->email, new ReservationCreatedMail($reservation));
 
             return response()->json($reservation, 201);
+        } catch (ValidationException $e) {
+            throw $e;
         } catch (\Throwable $e) {
             Log::error('Reservation store failed', [
                 'message' => $e->getMessage(),
@@ -177,8 +180,8 @@ class ReservationController extends Controller
     {
         $validated = $request->validate([
             'cabin_id'   => 'required|exists:cabins,id',
-            'start_date' => 'required|date|after_or_equal:today',
-            'end_date'   => 'required|date|after:start_date',
+            'start_date' => 'required|date_format:Y-m-d|after_or_equal:today',
+            'end_date'   => 'required|date_format:Y-m-d|after:start_date',
         ]);
 
         $startDate = Carbon::parse($validated['start_date'])->toDateString();
@@ -194,7 +197,6 @@ class ReservationController extends Controller
             })
             ->exists();
 
-        $days  = Carbon::parse($startDate)->diffInDays(Carbon::parse($endDate));
         $price = $priceCalculator->calculate(
             $cabin,
             Carbon::parse($startDate),
@@ -206,8 +208,11 @@ class ReservationController extends Controller
             'cabin_id'    => $cabin->id,
             'start_date'  => $startDate,
             'end_date'    => $endDate,
-            'total_days'  => $days,
+            'total_days'  => $price['nights'],
             'total_price' => $price['total'],
+            'nightly_prices' => $price['nightly_prices'],
+            'price_per_night' => $price['price_per_night'],
+            'average_price_per_night' => $price['average_price_per_night'],
         ]);
     }
 }

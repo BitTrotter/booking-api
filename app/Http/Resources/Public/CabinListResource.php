@@ -16,6 +16,7 @@ class CabinListResource extends JsonResource
             'name'            => $this->name,
             'description'     => $this->description,
             'price_per_night' => (float) $this->price_per_night,
+            'weekly_prices'   => $this->weekly_prices,
             'capacity'        => $this->capacity,
             'beds'            => $this->beds,
             'bathrooms'       => $this->bathrooms,

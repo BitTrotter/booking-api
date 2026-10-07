@@ -18,8 +18,8 @@ class CabinPriceController extends Controller
         PriceCalculatorService $priceCalculator
     ) {
         $validated = $request->validate([
-            'check_in'  => 'required|date',
-            'check_out' => 'required|date|after:check_in',
+            'check_in'  => 'required|date_format:Y-m-d',
+            'check_out' => 'required|date_format:Y-m-d|after:check_in',
         ]);
 
         $result = $priceCalculator->calculate(

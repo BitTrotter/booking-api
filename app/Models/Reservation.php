@@ -40,6 +40,7 @@ class Reservation extends Model
         'phone',
         'total_days',
         'total_price',
+        'nightly_prices',
         'status',
         'confirmation_token',
         'payment_method',
@@ -56,6 +57,7 @@ class Reservation extends Model
         'start_date' => 'date',
         'end_date'   => 'date',
         'amount_paid' => 'decimal:2',
+        'nightly_prices' => 'array',
     ];
 
     public function cabin()

@@ -17,6 +17,7 @@ class CabinDetailResource extends JsonResource
             'check_in'          => $this->check_in,
             'check_out'         => $this->check_out,
             'price_per_night'   => (float) $this->price_per_night,
+            'weekly_prices'     => $this->weekly_prices,
             'capacity'          => $this->capacity,
             'beds'              => $this->beds,
             'bathrooms'         => $this->bathrooms,
