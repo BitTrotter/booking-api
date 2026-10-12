@@ -41,7 +41,8 @@ class ReservationController extends Controller
                 'start_date' => 'required|date_format:Y-m-d|after_or_equal:today',
                 'end_date' => 'required|date_format:Y-m-d|after:start_date',
                 'full_name' => 'required|string|max:150',
-                'email'  => 'required|email|max:255',
+                'email'  => 'nullable|required_if:send_email,true|email|max:255',
+                'send_email' => 'sometimes|boolean',
                 'phone'  => 'required|string|max:20',
                 'guest_number' => 'required|integer|min:1',
                 'payment_method' => 'nullable|in:stripe,cash,bank_transfer,terminal,courtesy',
@@ -94,7 +95,7 @@ class ReservationController extends Controller
                     'end_date'   => $endDate,
                     'guest_count' => $guestCount,
                     'full_name'   => $validated['full_name'],
-                    'email'      => $validated['email'],
+                    'email'      => $validated['email'] ?? null,
                     'phone'      => $validated['phone'],
                     'total_days' => $price['nights'],
                     'total_price' => $total,
@@ -117,7 +118,9 @@ class ReservationController extends Controller
                 return response()->json(['message' => 'Cabin not available for selected dates'], 409);
             }
 
-            $this->mail->send($reservation->email, new ReservationCreatedMail($reservation));
+            if ($request->boolean('send_email')) {
+                $this->mail->send($reservation->email, new ReservationCreatedMail($reservation));
+            }
 
             return response()->json($reservation, 201);
         } catch (ValidationException $e) {
