@@ -32,6 +32,7 @@ class Reservation extends Model
         'user_id',
         'created_by',
         'cabin_id',
+        'reservation_group_id',
         'start_date',
         'end_date',
         'guest_count',
@@ -63,6 +64,12 @@ class Reservation extends Model
     public function cabin()
     {
         return $this->belongsTo(Cabin::class);
+    }
+
+    public function groupReservations()
+    {
+        return $this->hasMany(self::class, 'reservation_group_id', 'reservation_group_id')
+            ->orderBy('id');
     }
 
     public function user()
