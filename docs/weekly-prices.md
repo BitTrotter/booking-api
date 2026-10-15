@@ -4,6 +4,8 @@ Cada cabaña tiene `weekly_prices` con siete tarifas por noche. Se cobra desde e
 día de entrada hasta el día anterior a la salida. El día de salida no se cobra.
 Las tarifas se repiten cada semana, sin reglas de temporadas ni descuentos por
 mínimo de noches.
+Se pueden sobrescribir noches concretas mediante [tarifas especiales por fecha](special-prices.md),
+sin modificar los precios semanales del resto de los días.
 
 ## Crear o editar tarifas
 
@@ -43,6 +45,8 @@ Las respuestas administrativas y las listas y detalles públicos incluyen
 `weekly_prices`. En una cabaña, `price_per_night` conserva el precio mínimo de la
 semana para compatibilidad y puede mostrarse como «desde». No sirve para
 multiplicar todas las noches de una estancia.
+Ese mínimo semanal no incluye excepciones por fecha; una tarifa especial puede
+ser menor. Para mostrar el importe de una estancia, consultar la cotización.
 
 Los clientes antiguos pueden seguir creando o editando con `price_per_night`
 sin `weekly_prices`: esto establece esa misma tarifa para los siete días. Si se

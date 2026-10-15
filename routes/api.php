@@ -11,6 +11,7 @@ use App\Http\Controllers\Permissions\PermissionController;
 use App\Http\Controllers\Users\UsersController;
 use App\Http\Controllers\Cabins\CabinImageController;
 use App\Http\Controllers\Cabins\CabinPriceController;
+use App\Http\Controllers\Cabins\CabinSpecialPriceController;
 use App\Http\Controllers\Public\PublicCabinController;
 use App\Http\Controllers\Public\PublicReservationController;
 use App\Http\Controllers\Public\PublicPaymentController;
@@ -62,6 +63,9 @@ Route::middleware(['auth:api'])->group(function () {
     Route::delete('/cabins/{cabin}', [CabinController::class, 'destroy'])->middleware('permission:delete_cabin,api');
     Route::post('/cabins/{id}/features', [CabinController::class, 'assignFeatures'])->middleware('permission:edit_cabin,api');
     Route::post('/cabins/{cabin}/price', [CabinPriceController::class, 'calculate'])->middleware('permission:show_cabin_details,api');
+    Route::get('/cabins/{cabin}/special-prices', [CabinSpecialPriceController::class, 'index'])->middleware('permission:show_cabin_details,api');
+    Route::put('/cabins/{cabin}/special-prices/{date}', [CabinSpecialPriceController::class, 'upsert'])->middleware('permission:edit_cabin,api');
+    Route::delete('/cabins/{cabin}/special-prices/{date}', [CabinSpecialPriceController::class, 'destroy'])->middleware('permission:edit_cabin,api');
     Route::get('/reservations',                  [ReservationController::class, 'index'])->middleware('permission:list_reservation,api');
     Route::post('/reservations',                 [ReservationController::class, 'store'])->middleware('permission:create_reservation,api');
     Route::get('/reservations/{reservation}',    [ReservationController::class, 'show'])->middleware('permission:show_reservation_details,api');

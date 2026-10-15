@@ -22,10 +22,17 @@ class PriceCalculatorService
         $totalCents = 0;
         $nightlyPrices = [];
         $weeklyPrices = $cabin->weekly_prices ?? [];
+        $specialPrices = $cabin->exists
+            ? $cabin->specialPrices()
+                ->where('date', '>=', $current->toDateString())
+                ->where('date', '<', $departure->toDateString())
+                ->pluck('price_per_night', 'date')->all()
+            : [];
 
         while ($current->lt($departure)) {
             $day = strtolower($current->format('l'));
-            $cents = (int) round((float) ($weeklyPrices[$day] ?? $cabin->price_per_night) * 100);
+            $price = $specialPrices[$current->toDateString()] ?? $weeklyPrices[$day] ?? $cabin->price_per_night;
+            $cents = (int) round((float) $price * 100);
             $totalCents += $cents;
             $nightlyPrices[] = [
                 'date' => $current->toDateString(),
