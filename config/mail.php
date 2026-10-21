@@ -2,6 +2,11 @@
 
 return [
 
+    'reservation_admin_emails' => array_values(array_unique(array_filter(array_map(
+        'trim',
+        explode(',', (string) env('RESERVATION_ADMIN_EMAILS', env('RESERVATION_ADMIN_EMAIL', '')))
+    )))),
+
     /*
     |--------------------------------------------------------------------------
     | Default Mailer

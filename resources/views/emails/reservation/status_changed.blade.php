@@ -13,4 +13,7 @@
     <h1>{{ $headline }}</h1>
     <p class="lead">{{ $description }}</p>
     <x-emails.reservation-details :reservation="$reservation" :previous-status="$previousStatus" />
+    @if ($reservation->status === 'confirmed')
+        <x-emails.location />
+    @endif
 </x-emails.layout>

@@ -101,6 +101,7 @@ class PublicReservationController extends Controller
             }
 
             $this->mail->send($reservation->email, new ReservationCreatedMail($reservation));
+            $this->mail->sendReservationCreatedToAdmins($reservation);
 
             return response()->json([
                 'message' => 'Reservation created successfully',

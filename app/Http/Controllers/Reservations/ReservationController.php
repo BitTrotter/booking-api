@@ -167,10 +167,11 @@ class ReservationController extends Controller
                 return response()->json(['message' => 'Cabin not available for selected dates'], 409);
             }
 
-            if ($request->boolean('send_email')) {
-                foreach ($reservations as $reservation) {
+            foreach ($reservations as $reservation) {
+                if ($request->boolean('send_email')) {
                     $this->mail->send($reservation->email, new ReservationCreatedMail($reservation));
                 }
+                $this->mail->sendReservationCreatedToAdmins($reservation);
             }
 
             $this->includeRelatedReservations($reservations);
