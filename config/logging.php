@@ -52,6 +52,16 @@ return [
 
     'channels' => [
 
+        // Railway captures stderr. Keep payment diagnostics independent of LOG_CHANNEL
+        // and LOG_LEVEL so errors do not silently remain in laravel.log.
+        'payments' => [
+            'driver' => 'monolog',
+            'handler' => StreamHandler::class,
+            'handler_with' => ['stream' => 'php://stderr'],
+            'formatter' => \Monolog\Formatter\JsonFormatter::class,
+            'level' => 'error',
+        ],
+
         'stack' => [
             'driver' => 'stack',
             'channels' => explode(',', (string) env('LOG_STACK', 'single')),

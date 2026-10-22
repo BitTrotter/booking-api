@@ -7,6 +7,7 @@ use App\Mail\ReservationStatusChangedMail;
 use App\Models\Payment;
 use App\Models\Reservation;
 use App\Services\MailService;
+use App\Services\StripePaymentDiagnostics;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Stripe\Exception\SignatureVerificationException;
@@ -51,12 +52,18 @@ class PaymentController extends Controller
             ]);
         }
 
+        $stage = 'configuration';
         try {
-            Stripe::setApiKey(config('services.stripe.secret'));
+            $secret = config('services.stripe.secret');
+            if (! is_string($secret) || trim($secret) === '') {
+                throw new \LogicException('Stripe secret is not configured.');
+            }
+            Stripe::setApiKey($secret);
 
             $amountInCents = (int) round($reservation->total_price * 100);
             $currency = config('services.stripe.currency', 'mxn');
 
+            $stage = 'stripe_request';
             $intent = PaymentIntent::create([
                 'amount' => $amountInCents,
                 'currency' => $currency,
@@ -67,6 +74,7 @@ class PaymentController extends Controller
                 ],
             ]);
 
+            $stage = 'persist_payment';
             $payment = Payment::create([
                 'reservation_id' => $reservation->id,
                 'stripe_payment_intent_id' => $intent->id,
@@ -84,18 +92,9 @@ class PaymentController extends Controller
                 'reservation_id' => $reservation->id,
             ], 201);
         } catch (\Throwable $e) {
-            Log::error('Stripe createIntent failed', [
-                'message' => $e->getMessage(),
-                'reservation_id' => $reservation->id,
-                'user_id' => $request->user()->id,
-            ]);
+            app(StripePaymentDiagnostics::class)->report($e, $stage, 'authenticated');
 
-            $response = ['message' => 'Error creating payment intent'];
-            if (config('app.debug')) {
-                $response['error'] = $e->getMessage();
-            }
-
-            return response()->json($response, 500);
+            return response()->json(['message' => 'Error creating payment intent'], 500);
         }
     }
 
